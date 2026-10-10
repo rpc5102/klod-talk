@@ -1,0 +1,30 @@
+{
+  "name": "cave-talk",
+  "version": "0.1.0",
+  "description": "A side pane that retells Claude's answers in caveman speak, beside Klod, a pixel caveman whose pose follows the session.",
+  "author": { "name": "Bob Carey" },
+  "license": "MIT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "level": {
+      "type": "string",
+      "title": "How cave",
+      "description": "How much cave the retelling has. Literal rock makes no model call.",
+      "options": ["Less cave", "Caveman", "Very caveman", "Literal rock"],
+      "default": "Caveman"
+    },
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open at start",
+      "description": "Open the Cave Talk pane by itself in a fullscreen terminal 144 columns or wider. /cave opens it at any width.",
+      "default": true
+    },
+    "model": {
+      "type": "string",
+      "title": "Translation model",
+      "description": "The model that turns Claude's answers into cave words.",
+      "options": ["Haiku (fast)", "Same as Claude"],
+      "default": "Haiku (fast)"
+    }
+  }
+}

@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 __pycache__/
 *.preview.html
+
+# Laid by Claude Code each time it loads the mod from this folder
+.claude-plugin/types/

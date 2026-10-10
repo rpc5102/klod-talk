@@ -8,8 +8,9 @@ Claude does.
 
 <img src="kit/png/caveman_hero@8x.png" width="128" alt="Klod, a grumpy pixel caveman with a big beard">
 
-**Status:** designed, not built yet. The build starts with Phase 1: the pane,
-Klod and the cave translation.
+**Status:** Phase 1 is built: the pane, Klod's nine core poses (Idle,
+Impatient, Thinking, Snack, Explaining, Happy, Shrug, Panic, Sleep) and the cave
+translation. Every tool shows Thinking until Phase 2.
 
 ## Try it
 
@@ -23,6 +24,9 @@ claude --plugin-dir /path/to/klod-talk
 Then type `/cave`. To try a branch Claude is still working on, check that branch
 out in your clone first.
 
+The pane opens by itself in a fullscreen terminal 144 columns or wider. The cave
+level, the translation model and "Open at start" are in `/config`.
+
 ## What's here
 
 | Path | What it holds |
@@ -33,6 +37,22 @@ out in your clone first.
 | [docs/reference/](docs/reference/) | The starting word list, sample translations, and the script that paints Draw it pictures |
 | [kit/](kit/) | Klod's sprite kit: 28 poses, the source of every frame |
 | [CLAUDE.md](CLAUDE.md) | How Claude Code sessions build this repo |
+| `.claude-plugin/`, `hooks/`, `types/` | The mod: its manifest, its hooks module and parts, and its `$.state` contract |
+| [scripts/](scripts/) | Generate `hooks/catalog.ts`, `hooks/words.ts` and `tests/fixtures.ts` from the data above |
+| [tests/](tests/) | Unit tests and engine scenarios for `claude plugin test` |
+
+## Checking a change
+
+```bash
+node scripts/gen-catalog.mjs --check   # and gen-words, gen-fixtures: generated files are current
+claude plugin validate .
+tsc -p .                               # needs the types Claude Code lays in .claude-plugin/types/
+claude plugin test .
+```
+
+Claude Code writes `.claude-plugin/types/` each time an interactive session
+loads the mod with `--plugin-dir`, so run the mod once before the type check.
+The folder is not committed.
 
 ## Building it with Claude Code
 
