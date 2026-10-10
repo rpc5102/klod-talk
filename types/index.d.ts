@@ -147,6 +147,8 @@ export type CaveWords = {
   glossary: [string, string][]
   /** The whole cave answer for screen readers, set once per answer. */
   announce: string
+  /** Why the last translation failed, in plain words; null when it did not. */
+  problem: string | null
 }
 
 /** A copy of the userConfig options. */

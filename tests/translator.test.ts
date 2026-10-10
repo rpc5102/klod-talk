@@ -11,6 +11,8 @@ import {
   announcement,
   promptFor,
   requestFor,
+  whyNotAnswered,
+  whyRefused,
 } from '../hooks/translator'
 import { WORDS } from '../hooks/words'
 import { SAMPLES } from './fixtures'
@@ -41,6 +43,7 @@ describe('the prompt', () => {
       prompt: promptFor(job.text, job.level),
       maxTokens: MAX_TOKENS,
       timeoutMs: TIMEOUT_MS,
+      effort: 'low',
     })
     expect([MAX_TOKENS, TIMEOUT_MS]).toEqual([500, 8000])
   })
@@ -51,6 +54,7 @@ describe('the prompt', () => {
       prompt: [{ text: FIXED, cache: true }, { text: promptFor(job.text, job.level) }],
       maxTokens: MAX_TOKENS,
       timeoutMs: TIMEOUT_MS,
+      effort: 'low',
     })
   })
 })
@@ -81,4 +85,26 @@ describe('afterReload()', () => {
 test('the announcement is his line, then the whole cave answer', () => {
   const paragraphs = [[{ text: 'Box fall.', isTerm: false }], [{ text: 'Fix:', isTerm: true }, { text: ' belly.', isTerm: false }]]
   expect(announcement('caveman', paragraphs)).toBe('Me make big words small. Box fall. Fix: belly.')
+})
+
+describe('why a translation failed', () => {
+  const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }
+
+  test('each way a call comes back without words, in plain words', () => {
+    expect(whyNotAnswered({ isAnswered: false, reason: 'api-error', status: 404, error: 'model_not_found', usage })).toBe(
+      'API error 404, model not found',
+    )
+    expect(whyNotAnswered({ isAnswered: false, reason: 'api-error', status: null, error: 'unknown', usage })).toBe(
+      'API error (no response), unknown',
+    )
+    expect(whyNotAnswered({ isAnswered: false, reason: 'empty-reply', usage })).toBe('the model sent back no words')
+    expect(whyNotAnswered({ isAnswered: false, reason: 'aborted', usage })).toBe('no reply within 8 s')
+  })
+
+  test('a refusal keeps its own words, cut to one line', () => {
+    expect(whyRefused('Model "nope" is not\n allowed')).toBe('the call was refused (Model "nope" is not allowed)')
+    const long = whyRefused('x'.repeat(200))
+    expect(long.length).toBeLessThan(110)
+    expect(long.endsWith('\u2026)')).toBe(true)
+  })
 })

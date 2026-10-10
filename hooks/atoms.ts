@@ -37,6 +37,7 @@ export const EMPTY_CAVE: CaveWords = {
   mammoths: 0,
   glossary: [],
   announce: '',
+  problem: null,
 }
 
 export const DEFAULT_SETTINGS: CaveSettings = {

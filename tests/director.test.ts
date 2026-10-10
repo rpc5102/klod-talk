@@ -99,6 +99,10 @@ describe('desired()', () => {
     expect(want.name).toBe('shrug')
     expect(want.status).toBe('Me brain hurt.')
     expect(want.beat).toEqual(beat)
+    const why = words({ phase: 'failed', problem: 'API error 404, model not found' })
+    expect(desired(facts({ ownBeats: [beat] }), why, NOW).meta).toBe(
+      'Translation failed: API error 404, model not found',
+    )
   })
 
   test('The result holds 60 quiet seconds, then Idle', () => {

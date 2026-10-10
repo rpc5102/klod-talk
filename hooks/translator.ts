@@ -79,7 +79,9 @@ export function requestFor(
 ): ModelCompleteRequest {
   const fixed = { text: FIXED, cache: true } as const
   const ask = promptFor(job.text, job.level)
-  const limits = { maxTokens: MAX_TOKENS, timeoutMs: TIMEOUT_MS }
+  // Low effort: retelling needs no deep thought, and it keeps the chew to about
+  // a second instead of five, at a fraction of the tokens.
+  const limits = { maxTokens: MAX_TOKENS, timeoutMs: TIMEOUT_MS, effort: 'low' } as const
 
   return leadsPrompt
     ? { model, prompt: [fixed, { text: ask }], ...limits }
@@ -91,7 +93,34 @@ export function announcement(level: CaveLevel, paragraphs: readonly (readonly Se
   return [levelInfo(level).status, ...paragraphs.map(plainText)].join(' ')
 }
 
-type Flight = { token: number; abort: AbortController; job: CaveSource; startedAt: number }
+type Flight = {
+  token: number
+  abort: AbortController
+  job: CaveSource
+  model: string
+  startedAt: number
+}
+
+/** What a call came back with: the model's result, or the engine refusing to send it. */
+type Outcome = { result: ModelCompleteResult } | { refused: string }
+
+/** Why a call that came back without words failed, in plain words for the meta line. */
+export function whyNotAnswered(result: Exclude<ModelCompleteResult, { isAnswered: true }>): string {
+  switch (result.reason) {
+    case 'api-error':
+      return `API error ${result.status ?? '(no response)'}, ${result.error.replaceAll('_', ' ')}`
+    case 'empty-reply':
+      return 'the model sent back no words'
+    case 'aborted':
+      return `no reply within ${TIMEOUT_MS / 1000} s`
+  }
+}
+
+/** A refusal's own words, cut to fit one line. */
+export function whyRefused(message: string): string {
+  const text = message.replace(/\s+/g, ' ').trim()
+  return `the call was refused (${text.length > 80 ? `${text.slice(0, 79)}\u2026` : text})`
+}
 
 let flight: Flight | null = null
 let waiting: CaveSource | null = null
@@ -204,26 +233,27 @@ async function start(port: Port, job: CaveSource): Promise<void> {
     token: (tokens += 1),
     abort: new AbortController(),
     job,
+    model,
     startedAt: await port.now(),
   }
   flight = current
-  await merge(port, { source: job, phase: 'chewing', shown: 0 })
+  await merge(port, { source: job, phase: 'chewing', shown: 0, problem: null })
   await director.evaluate(port)
   void call(port, current, requestFor(job, model, leads))
 }
 
 async function call(port: Port, current: Flight, ask: ModelCompleteRequest): Promise<void> {
-  let result: ModelCompleteResult | null
+  let outcome: Outcome
   try {
-    result = await port.complete(ask, current.abort.signal)
-  } catch {
-    // A blocked model or a bad request.
-    result = null
+    outcome = { result: await port.complete(ask, current.abort.signal) }
+  } catch (error) {
+    // The engine would not send it: a blocked model or a bad request.
+    outcome = { refused: error instanceof Error ? error.message : String(error) }
   }
-  await port.work(() => settle(port, current, result))
+  await port.work(() => settle(port, current, outcome))
 }
 
-async function settle(port: Port, current: Flight, result: ModelCompleteResult | null): Promise<void> {
+async function settle(port: Port, current: Flight, outcome: Outcome): Promise<void> {
   if (flight !== current) {
     // Stopped by a /clear.
     return
@@ -236,18 +266,19 @@ async function settle(port: Port, current: Flight, result: ModelCompleteResult |
     await start(port, next)
     return
   }
-  if (result === null) {
-    await failed(port)
+  const elapsed = (await port.now()) - current.startedAt
+  if ('refused' in outcome) {
+    await failed(port, current, elapsed, whyRefused(outcome.refused))
     return
   }
+  const { result } = outcome
   if (!result.isAnswered) {
-    const elapsed = (await port.now()) - current.startedAt
     if (result.reason === 'aborted' && elapsed < TIMEOUT_MS - 500) {
       // Cut short, not timed out: the person pressed Esc. Skipped quietly.
       await quiet(port)
       return
     }
-    await failed(port)
+    await failed(port, current, elapsed, whyNotAnswered(result))
     return
   }
 
@@ -258,7 +289,7 @@ async function settle(port: Port, current: Flight, result: ModelCompleteResult |
     return
   }
   if (reply.paragraphs.length === 0) {
-    await failed(port)
+    await failed(port, current, elapsed, 'the reply had no words in it')
     return
   }
   await land(port, current.job, reply.paragraphs, reply.size)
@@ -346,8 +377,9 @@ async function sober(port: Port, job: CaveSource): Promise<void> {
   await director.evaluate(port)
 }
 
-async function failed(port: Port): Promise<void> {
-  await merge(port, { phase: 'failed', shown: 0 })
+async function failed(port: Port, current: Flight, elapsed: number, problem: string): Promise<void> {
+  port.log(`translation failed after ${elapsed} ms on model "${current.model}": ${problem}`)
+  await merge(port, { phase: 'failed', shown: 0, problem })
   await port.changeFacts(tracker.translationFailed())
   await director.evaluate(port)
 }

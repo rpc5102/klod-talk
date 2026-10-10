@@ -81,7 +81,9 @@ export function desired(facts: SessionFacts, words: CaveWords, now: number): Wan
   }
   const beat = facts.ownBeats[0]
   if (beat !== undefined) {
-    return want('shrug', LINES.failed, { beat })
+    const [status, meta] = LINES.failed
+    const why = words.problem === null ? meta : `Translation failed: ${words.problem}`
+    return want('shrug', [status, why], { beat })
   }
   if (facts.turn !== null) {
     return want('thinking', LINES.thinking)

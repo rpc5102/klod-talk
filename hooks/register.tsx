@@ -31,9 +31,8 @@ const PANE_ROWS = 24
 /** Keystrokes closer together than this are one fact change. */
 const TYPING_STEP_MS = 200
 
-function logError($: EngineInterface, error: unknown): void {
+function debugLog($: EngineInterface, text: string): void {
   try {
-    const text = error instanceof Error ? error.message : String(error)
     $.ui.log(`cave-talk: ${text}`, { to: 'debug' })
   } catch {
     // The log is best effort.
@@ -44,7 +43,8 @@ function portFor($: EngineInterface): Port {
   return {
     now: () => $.clock.now(),
     after: (ms, fn) => $.clock.after(ms, fn),
-    work: task => lane(task, error => logError($, error)),
+    work: task =>
+      lane(task, error => debugLog($, `error: ${error instanceof Error ? error.message : String(error)}`)),
     facts: () => read($, session),
     changeFacts: change => update($, session, change),
     words: () => read($, cave),
@@ -68,6 +68,7 @@ function portFor($: EngineInterface): Port {
       ])
       return flags.some(flag => flag !== undefined && flag !== '' && flag !== '0')
     },
+    log: text => debugLog($, text),
   }
 }
 

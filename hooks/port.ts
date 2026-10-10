@@ -30,4 +30,6 @@ export type Port = {
   claudeModel: () => Promise<string>
   /** True behind Bedrock, Vertex, Foundry or a gateway. */
   isGateway: () => Promise<boolean>
+  /** A line in the debug log (`claude --debug`), never the transcript. */
+  log: (text: string) => void
 }

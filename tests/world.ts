@@ -231,10 +231,11 @@ export function world($: Engine, on: On): World {
     w.configSets.push({ key: e.key, value: e.value })
     return { value: e.value }
   })
-  // Cave Talk logs only when work on its lane failed: that fails the test.
+  // Cave Talk logs why a translation failed; an error on its lane fails the test.
   on('ui.log', ($, e) => {
     w.logs.push(e.text)
-    expect(e.text, 'Cave Talk logged a failure').toBe('')
+    expect(e.to, 'Cave Talk logs to the debug log only').toBe('debug')
+    expect(e.text.startsWith('cave-talk: error:'), `Cave Talk logged ${e.text}`).toBe(false)
     return { value: undefined }
   })
   on('session.model', () => ({ value: 'claude-opus-5-5' }))

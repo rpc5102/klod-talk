@@ -142,11 +142,11 @@ test('Panic cuts in mid-hold on an API error, then Shrug', { plugins: [PEEK] }, 
   expect(atoms.pose.meta).toBe('The turn ended on an API error')
 })
 
-for (const [name, answer] of [
-  ['an API error', () => apiError()],
-  ['an empty reply', () => notAnswered('empty-reply')],
-  ['a blocked model', () => 'refuse' as const],
-  ['a reply with no words in it', () => answered('SIZE 2\n\n')],
+for (const [name, answer, why] of [
+  ['an API error', () => apiError(), 'API error 500, server error'],
+  ['an empty reply', () => notAnswered('empty-reply'), 'the model sent back no words'],
+  ['a blocked model', () => 'refuse' as const, /^the call was refused \(.*model not allowed.*\)$/],
+  ['a reply with no words in it', () => answered('SIZE 2\n\n'), 'the reply had no words in it'],
 ] as const) {
   test(`${name} gives Shrug and "Me brain hurt.", and Claude's answer is untouched`, { plugins: [PEEK] }, async ($, on) => {
     const w = world($, on)
@@ -159,6 +159,11 @@ for (const [name, answer] of [
     let atoms = await w.peek()
     expect(atoms.pose).toMatchObject({ name: 'shrug', status: 'Me brain hurt.', beat: 'failed' })
     expect(atoms.cave.phase).toBe('failed')
+    // The plain-words line says why, and so does the debug log.
+    expect(atoms.cave.problem).toMatch(why)
+    expect(atoms.pose.meta).toBe(`Translation failed: ${atoms.cave.problem}`)
+    expect(w.logs).toHaveLength(1)
+    expect(w.logs[0]).toMatch(/^cave-talk: translation failed after \d+ ms on model "haiku": /)
     // The beat plays 2 s, then the turn's own result.
     await w.advance(2000)
     atoms = await w.peek()
@@ -176,8 +181,11 @@ test('the 8 s timeout is a failure; an early abort (Esc) is skipped quietly', { 
   await w.start()
   await w.turnComplete(crashloop.chat, 'turn-1')
   await w.advance(8000)
-  expect((await w.peek()).pose.status).toBe('Me brain hurt.')
-  expect(w.modelCalls[0]).toMatchObject({ timeoutMs: 8000, maxTokens: 500 })
+  expect((await w.peek()).pose).toMatchObject({
+    status: 'Me brain hurt.',
+    meta: 'Translation failed: no reply within 8 s',
+  })
+  expect(w.modelCalls[0]).toMatchObject({ timeoutMs: 8000, maxTokens: 500, effort: 'low' })
 
   w.answer = async () => {
     await w.clock.sleep(300)
@@ -188,6 +196,7 @@ test('the 8 s timeout is a failure; an early abort (Esc) is skipped quietly', { 
   await w.advance(300)
   const atoms = await w.peek()
   expect(atoms.cave.phase).toBe('empty')
+  expect(atoms.cave.problem).toBeNull()
   expect(atoms.session.ownBeats).toEqual([])
   expect(atoms.pose.name).toBe('happy')
 })
