@@ -1,0 +1,180 @@
+{
+  "board": "R12-Quiet-Prototype",
+  "alt": {
+    "happy": "Caveman grinning, holding a torch, head bouncing",
+    "idle": "Caveman standing, blinking now and then",
+    "petrock": "Caveman patting a small grey rock with eyes; a heart pops up over it",
+    "juggle": "Caveman with knees bent juggling three pale pebbles in an arc over his head, one hand up, the other down",
+    "roast": "Caveman sitting beside a small fire, holding a drumstick out over the flames on a long stick",
+    "polish": "Caveman rubbing his club with a pale scrap of hide until it sparkles",
+    "sleep": "Caveman asleep standing up",
+    "impatient": "Caveman with arms crossed, tapping a foot"
+  },
+  "answer": [
+    [
+      [
+        "Both cave agree what day it is. ",
+        0
+      ],
+      [
+        "Peace in valley",
+        1
+      ],
+      [
+        ".",
+        0
+      ]
+    ],
+    [
+      [
+        "Far away test cave say all good. We eat mammoth tomorrow. Whatever day that is.",
+        0
+      ]
+    ]
+  ],
+  "typed": "wait, one more thing about the invoices",
+  "typing": {
+    "sprite": "impatient",
+    "status": "Oh. You back. Me ready.",
+    "meta": "You are typing…"
+  },
+  "scenes": [
+    {
+      "id": "end",
+      "chip": "Turn ends",
+      "ms": 2400,
+      "sprite": "happy",
+      "status": "All green. Me happy.",
+      "clock": 0
+    },
+    {
+      "id": "idle1",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 60
+    },
+    {
+      "id": "petrock",
+      "chip": "Pet rock",
+      "ms": 3840,
+      "sprite": "petrock",
+      "status": "Me pet rock. Rock good boy.",
+      "clock": 220,
+      "fidget": true
+    },
+    {
+      "id": "idle2",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 224
+    },
+    {
+      "id": "juggle",
+      "chip": "Juggle",
+      "ms": 1920,
+      "sprite": "juggle",
+      "status": "Me juggle three rock. Me count to three.",
+      "clock": 375,
+      "fidget": true
+    },
+    {
+      "id": "idle3",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 377
+    },
+    {
+      "id": "roast",
+      "chip": "Roast",
+      "ms": 1920,
+      "sprite": "roast",
+      "status": "Me roast lunch. Lunch never ready.",
+      "clock": 570,
+      "fidget": true
+    },
+    {
+      "id": "idle4",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 572
+    },
+    {
+      "id": "polish",
+      "chip": "Polish club",
+      "ms": 1920,
+      "sprite": "polish",
+      "status": "Me polish club. For later.",
+      "clock": 725,
+      "fidget": true
+    },
+    {
+      "id": "idle5",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 727
+    },
+    {
+      "id": "petrock2",
+      "chip": "Pet rock",
+      "same": "petrock",
+      "ms": 3840,
+      "sprite": "petrock",
+      "status": "Rock not fetch. Still good boy.",
+      "clock": 890,
+      "fidget": true
+    },
+    {
+      "id": "idle6",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 894
+    },
+    {
+      "id": "juggle2",
+      "chip": "Juggle",
+      "same": "juggle",
+      "ms": 1920,
+      "sprite": "juggle",
+      "status": "One rock. Two rock. Three rock. Me do math.",
+      "clock": 1055,
+      "fidget": true
+    },
+    {
+      "id": "idle7",
+      "chip": "Idle",
+      "ms": 1000,
+      "sprite": "idle",
+      "status": "Me wait.",
+      "clock": 1057
+    },
+    {
+      "id": "sleep",
+      "chip": "Asleep",
+      "ms": 0,
+      "sprite": "sleep",
+      "status": "Zzz… mammoth… zzz",
+      "clock": 1200
+    }
+  ],
+  "chips": [
+    "end",
+    "idle1",
+    "petrock",
+    "juggle",
+    "roast",
+    "polish",
+    "sleep"
+  ]
+}

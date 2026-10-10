@@ -1,0 +1,40 @@
+{
+  "_note": "The starting word list from the Words board (R10-Dictionary). Same term, same cave word, every time.",
+  "groups": {
+    "Boxes and rocks": {
+      "Kubernetes": "Big Boss Rock",
+      "Pod": "little box",
+      "Memory limit": "belly",
+      "DNS": "Name Rock",
+      "CI": "far away test cave",
+      "UTC": "cave with no window",
+      "Timezone": "which cave you live in",
+      "Rollout": "new box go out",
+      "Running": "box standing",
+      "deployment.yaml": "belly rules"
+    },
+    "Bad things": {
+      "OOMKilled": "eat too much mammoth",
+      "CrashLoopBackOff": "fall-down dance",
+      "Race condition": "two caveman, one leg",
+      "Memory leak": "pocket full of rock",
+      "undefined": "no rock there",
+      "KeyError": "rock not in pile",
+      "Flaky test": "moody test"
+    },
+    "Code things": {
+      "Conflict markers": "angry lines",
+      "Rebase": "repaint wall from start",
+      "dict": "rock pile",
+      "pytest": "make fire",
+      "kubectl": "poking stick"
+    },
+    "What Claude does": {
+      "Read": "look at scroll",
+      "Update": "carve",
+      "Grep": "hunt word",
+      "Permission": "ask nice",
+      "WebSearch": "yell into Big Cave"
+    }
+  }
+}

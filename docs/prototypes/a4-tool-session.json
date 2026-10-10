@@ -1,0 +1,807 @@
+{
+  "board": "R6-Live-Tools",
+  "prompt": "billing tests fail on CI but pass on my laptop",
+  "chew": {
+    "sprite": "snack",
+    "alt": "Caveman gnawing a giant drumstick",
+    "status": "Me chew big words…",
+    "meta": "Turning Claude’s answer into cave talk",
+    "rockStatus": "Rock thinking…"
+  },
+  "scenes": [
+    {
+      "id": "typing",
+      "label": "You type",
+      "ms": 3600,
+      "sprite": "impatient",
+      "alt": "Caveman with arms crossed, tapping a foot",
+      "status": "Hurry. Mammoth not wait.",
+      "meta": "You are typing…",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me wait. You type. Me count rock while me wait.",
+            0
+          ]
+        ]
+      ],
+      "glossary": []
+    },
+    {
+      "id": "hunt",
+      "label": "Search",
+      "ms": 2600,
+      "sprite": "hunt",
+      "alt": "Caveman with a spear, shading his eyes, while a bush with eyes watches him",
+      "status": "Me hunt word.",
+      "meta": "Claude ran Grep",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me hunt word ",
+            0
+          ],
+          [
+            "date.today",
+            1
+          ],
+          [
+            ". Find it three time, in two scroll.",
+            0
+          ]
+        ],
+        [
+          [
+            "Word hide in invoice. Word always hide in invoice.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "Grep",
+          "hunt word"
+        ]
+      ],
+      "result": true,
+      "paraTicks": 16
+    },
+    {
+      "id": "read",
+      "label": "Read",
+      "ms": 3000,
+      "sprite": "read",
+      "alt": "Caveman unrolling a scroll so long it piles on his feet",
+      "status": "Me read. Scroll long.",
+      "meta": "Claude read src/billing/invoice.py",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me read scroll ",
+            0
+          ],
+          [
+            "invoice.py",
+            1
+          ],
+          [
+            ". One hundred forty-two line.",
+            0
+          ]
+        ],
+        [
+          [
+            "Me nod like me understand. Me not understand. Claude understand.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "Read",
+          "look at scroll"
+        ]
+      ],
+      "result": true,
+      "paraTicks": 14
+    },
+    {
+      "id": "shout",
+      "label": "Web",
+      "ms": 3000,
+      "sprite": "shout",
+      "alt": "Caveman shouting through cupped hands, then cupping an ear for the echo",
+      "status": "Me shout into Big Cave.",
+      "meta": "Claude searched the web",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me yell into Big Cave of Internet: ",
+            0
+          ],
+          [
+            "PYTEST FREEZE TIME TIMEZONE?",
+            1
+          ]
+        ],
+        [
+          [
+            "Big Cave yell back ten thing. Very loud cave.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "WebSearch",
+          "yell into Big Cave"
+        ]
+      ],
+      "result": true,
+      "paraTicks": 18
+    },
+    {
+      "id": "answer",
+      "label": "Answer",
+      "ms": 8400,
+      "sprite": "explaining",
+      "alt": "Caveman pointing at a cave drawing on a stone tablet",
+      "status": "",
+      "meta": "",
+      "mammoths": 2,
+      "body": [],
+      "glossary": [
+        [
+          "Timezone",
+          "which cave you live in"
+        ],
+        [
+          "UTC",
+          "cave with no window"
+        ],
+        [
+          "CI",
+          "far away test cave"
+        ]
+      ],
+      "translated": true
+    },
+    {
+      "id": "ask",
+      "label": "Ask",
+      "ms": 0,
+      "wait": true,
+      "sprite": "sign",
+      "alt": "Caveman holding up a wooden sign that says OK?",
+      "status": "Me need yes.",
+      "meta": "Claude is waiting for your permission",
+      "mammoths": 2,
+      "body": [
+        [
+          [
+            "Claude want bring new tool into cave: ",
+            0
+          ],
+          [
+            "freezegun",
+            1
+          ],
+          [
+            ".",
+            0
+          ]
+        ],
+        [
+          [
+            "Claude ask first. Polite Claude. You click yes or no. Me hold sign.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "Permission",
+          "ask nice"
+        ]
+      ]
+    },
+    {
+      "id": "carve",
+      "label": "Edit",
+      "ms": 3000,
+      "sprite": "carve",
+      "alt": "Caveman chiselling marks into a stone slab",
+      "status": "Me carve.",
+      "meta": "Claude edited 2 files",
+      "mammoths": 2,
+      "body": [
+        [
+          [
+            "Me carve ",
+            0
+          ],
+          [
+            "invoice.py",
+            1
+          ],
+          [
+            ". Three mark in. One mark out.",
+            0
+          ]
+        ],
+        [
+          [
+            "Me carve test scroll too. Six mark in. Stone not have undo.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "Update",
+          "carve"
+        ]
+      ],
+      "result": true,
+      "paraTicks": 16
+    },
+    {
+      "id": "test",
+      "label": "Test",
+      "ms": 4200,
+      "sprite": "flint",
+      "alt": "Caveman striking two stones to make sparks",
+      "status": "Me make fire…",
+      "meta": "Claude ran pytest",
+      "mammoths": 2,
+      "body": [
+        [
+          [
+            "Rock hit rock. Me start fire: pytest.",
+            0
+          ]
+        ],
+        [
+          [
+            "Two hundred fourteen spark. Every spark catch.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "pytest",
+          "make fire"
+        ]
+      ],
+      "result": true,
+      "paraTicks": 20,
+      "after": {
+        "sprite": "suspicious",
+        "alt": "Caveman squinting with one eyebrow up, stroking his beard",
+        "status": "Too easy. Me not trust.",
+        "meta": "214 passed on the first try"
+      }
+    },
+    {
+      "id": "ci",
+      "label": "CI",
+      "ms": 4200,
+      "sprite": "dance",
+      "alt": "Caveman hopping on one leg, waving a little torch",
+      "status": "Me do hurry-up dance.",
+      "meta": "Claude is watching the CI run · 41 s",
+      "mammoths": 2,
+      "body": [
+        [
+          [
+            "Far away test cave slow. Me dance. Dance make CI fast.",
+            0
+          ]
+        ],
+        [
+          [
+            "(Dance not make CI fast.)",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "CI",
+          "far away test cave"
+        ]
+      ]
+    },
+    {
+      "id": "done",
+      "label": "All good",
+      "ms": 5600,
+      "sprite": "explaining",
+      "alt": "Caveman pointing at a cave drawing on a stone tablet",
+      "translated": true,
+      "status": "",
+      "meta": "",
+      "mammoths": 0,
+      "after": {
+        "sprite": "happy",
+        "alt": "Caveman grinning, holding a torch, head bouncing",
+        "status": "All green. Me happy.",
+        "meta": "CI passed · 214 tests"
+      },
+      "levels": [
+        [
+          [
+            [
+              "Fixed. Both computer now agree what day it is, and CI pass.",
+              0
+            ]
+          ],
+          [
+            [
+              "Invoice count days in New York time. Test freeze clock at 11:30 at night.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Both cave agree what day it is. ",
+              0
+            ],
+            [
+              "Peace in valley",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "Far away test cave say all good. We eat mammoth tomorrow. Whatever day that is.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "DAY FIXED. ",
+              0
+            ],
+            [
+              "CI GREEN",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "ME HAPPY. ME LOUD.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock.",
+              1
+            ]
+          ]
+        ]
+      ],
+      "glossary": [],
+      "chewMammoths": 2
+    },
+    {
+      "id": "idle",
+      "label": "Asleep",
+      "ms": 0,
+      "sprite": "sleep",
+      "alt": "Caveman asleep standing up",
+      "status": "Zzz… mammoth… zzz",
+      "meta": "Quiet for 20 minutes",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me sleep. Poke me when Claude talk.",
+            0
+          ]
+        ]
+      ],
+      "glossary": []
+    }
+  ],
+  "chat": [
+    {
+      "kind": "user",
+      "from": 1,
+      "text": "billing tests fail on CI but pass on my laptop"
+    },
+    {
+      "kind": "tool",
+      "from": 1,
+      "call": "Grep(\"date.today\", path=\"src/billing\")",
+      "result": "Found 3 matches in 2 files"
+    },
+    {
+      "kind": "tool",
+      "from": 2,
+      "call": "Read(src/billing/invoice.py)",
+      "result": "Read 142 lines"
+    },
+    {
+      "kind": "tool",
+      "from": 3,
+      "call": "WebSearch(\"pytest freeze time timezone\")",
+      "result": "Did 1 search, 10 results"
+    },
+    {
+      "kind": "answer",
+      "from": 4,
+      "paras": [
+        [
+          [
+            "The failures are a ",
+            0
+          ],
+          [
+            "timezone",
+            1
+          ],
+          [
+            " bug. CI runs in ",
+            0
+          ],
+          [
+            "UTC",
+            2
+          ],
+          [
+            " and your laptop in ",
+            0
+          ],
+          [
+            "America/New_York",
+            2
+          ],
+          [
+            ". ",
+            0
+          ],
+          [
+            "due_date()",
+            2
+          ],
+          [
+            " calls ",
+            0
+          ],
+          [
+            "date.today()",
+            2
+          ],
+          [
+            ", so after 8 pm Eastern the two machines disagree on the date and due dates land a day apart.",
+            0
+          ]
+        ],
+        [
+          [
+            "Fix:",
+            1
+          ],
+          [
+            " compute dates in the business timezone with ",
+            0
+          ],
+          [
+            "ZoneInfo",
+            2
+          ],
+          [
+            " and freeze the clock in the tests. I’ll add ",
+            0
+          ],
+          [
+            "freezegun",
+            2
+          ],
+          [
+            " for that.",
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "kind": "prompt",
+      "from": 5,
+      "text": "Allow Bash(pip install freezegun)?"
+    },
+    {
+      "kind": "tool",
+      "from": 6,
+      "call": "Update(src/billing/invoice.py)",
+      "result": "Updated 1 file, +3 −1"
+    },
+    {
+      "kind": "tool",
+      "from": 6,
+      "call": "Update(tests/billing/test_invoice.py)",
+      "result": "Updated 1 file, +6"
+    },
+    {
+      "kind": "tool",
+      "from": 7,
+      "call": "Bash(pytest tests/billing -q)",
+      "result": "214 passed in 6.2s"
+    },
+    {
+      "kind": "tool",
+      "from": 8,
+      "call": "Bash(git push && gh run watch)",
+      "result": "CI · billing · completed: success · 41s"
+    },
+    {
+      "kind": "text",
+      "from": 9,
+      "segs": [
+        [
+          "Done. CI is green: invoice dates now use ",
+          0
+        ],
+        [
+          "America/New_York",
+          2
+        ],
+        [
+          " and the tests freeze time at 11:30 pm.",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "later",
+      "from": 10
+    }
+  ],
+  "levels": [
+    {
+      "name": "Less cave",
+      "status": "Me use more word. Still small word.",
+      "takes": [
+        [
+          [
+            [
+              "Your test pass at home and fail on CI because the two computers not agree what day it is.",
+              0
+            ]
+          ],
+          [
+            [
+              "CI cave live on ",
+              0
+            ],
+            [
+              "UTC",
+              1
+            ],
+            [
+              " time. Your laptop live on New York time. After 8 at night, CI already in tomorrow, so due date come out one day late.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " tell invoice to count days in New York time, and freeze clock in test so sun stop moving.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Caveman",
+      "status": "Me make big words small.",
+      "takes": [
+        [
+          [
+            [
+              "Your cave and CI cave not agree what day it is.",
+              0
+            ]
+          ],
+          [
+            [
+              "Your cave: still Tuesday. CI cave: already ",
+              0
+            ],
+            [
+              "Wednesday",
+              1
+            ],
+            [
+              ". CI cave have no window. CI cave guess.",
+              0
+            ]
+          ],
+          [
+            [
+              "Invoice say due in thirty sun. Thirty sun from ",
+              0
+            ],
+            [
+              "which",
+              1
+            ],
+            [
+              " day? Test cry.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " tell invoice which cave it live in. Freeze sun in test. Sun not move, test not cry.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Sun go down at different time in different cave.",
+              0
+            ]
+          ],
+          [
+            [
+              "Your cave say Tuesday. CI cave say ",
+              0
+            ],
+            [
+              "Wednesday",
+              1
+            ],
+            [
+              ". Both cave very sure. Both cave stubborn.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " pick one cave. Everybody use New York cave. Freeze sun in test.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Story of two cave. Same test. Different day.",
+              0
+            ]
+          ],
+          [
+            [
+              "Test pass in your cave. Test fail in CI cave. Test not bad. ",
+              0
+            ],
+            [
+              "Calendar",
+              1
+            ],
+            [
+              " bad.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " everybody agree on one cave. Then stop sun. Moral: always ask which cave.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Very caveman",
+      "status": "UGH. ME EXPLAIN.",
+      "takes": [
+        [
+          [
+            [
+              "Day. Wrong. ",
+              0
+            ],
+            [
+              "UGH",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "Your cave Tuesday. CI cave Wednesday. Why. WHY.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " ONE CAVE. STOP SUN.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Literal rock",
+      "status": "Rock.",
+      "takes": [
+        [
+          [
+            [
+              "Rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock rock rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock.",
+              1
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+}

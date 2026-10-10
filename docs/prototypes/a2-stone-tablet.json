@@ -1,0 +1,475 @@
+{
+  "board": "R2-A2-Prototype",
+  "scenes": [
+    {
+      "id": "typing",
+      "label": "You type",
+      "sprite": "impatient",
+      "alt": "Caveman tapping his foot, arms crossed",
+      "status": "Hurry. Mammoth not wait.",
+      "meta": "You are typing…",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me wait. Me watch you type. You type slow.",
+            0
+          ]
+        ],
+        [
+          [
+            "Me count fingers while me wait. Me run out of fingers.",
+            0
+          ]
+        ]
+      ],
+      "glossary": []
+    },
+    {
+      "id": "thinking",
+      "label": "Claude thinks",
+      "sprite": "thinking",
+      "alt": "Caveman scratching his head under a question mark",
+      "status": "Smart rock thinking…",
+      "meta": "Claude is working",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Claude think hard. Me also think. Me think about lunch.",
+            0
+          ]
+        ]
+      ],
+      "glossary": []
+    },
+    {
+      "id": "build",
+      "label": "Build runs",
+      "sprite": "flint",
+      "alt": "Caveman striking two stones to make sparks",
+      "status": "Me make fire…",
+      "meta": "Claude ran mvn package",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Claude cook code. Code need ",
+            0
+          ],
+          [
+            "fire",
+            1
+          ],
+          [
+            ".",
+            0
+          ]
+        ],
+        [
+          [
+            "Me help. Rock hit rock. Spark. Spark. Smoke. Almost fire.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "Build",
+          "make fire"
+        ]
+      ]
+    },
+    {
+      "id": "error",
+      "label": "Error found",
+      "sprite": "panic",
+      "alt": "Caveman panicking, arms flailing",
+      "status": "AAAAH. Rock broke.",
+      "meta": "Claude found a CrashLoopBackOff",
+      "mammoths": 3,
+      "body": [
+        [
+          [
+            "Little box fall down. Little box get up. Little box fall down ",
+            0
+          ],
+          [
+            "AGAIN",
+            1
+          ],
+          [
+            ".",
+            0
+          ]
+        ],
+        [
+          [
+            "Me not like this dance.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "CrashLoopBackOff",
+          "fall-down dance"
+        ]
+      ]
+    },
+    {
+      "id": "answer",
+      "label": "Answer",
+      "sprite": "explaining",
+      "alt": "Caveman pointing at a cave drawing on a stone tablet",
+      "status": "",
+      "meta": "",
+      "mammoths": 3,
+      "body": [],
+      "glossary": [
+        [
+          "Pod",
+          "little box"
+        ],
+        [
+          "Kubernetes",
+          "Big Boss Rock"
+        ],
+        [
+          "Memory limit",
+          "belly"
+        ]
+      ]
+    },
+    {
+      "id": "fix",
+      "label": "Fix applied",
+      "sprite": "bonk",
+      "alt": "Caveman bonking a bug with a club",
+      "status": "Me bonk bug.",
+      "meta": "Claude edited deployment.yaml",
+      "mammoths": 1,
+      "body": [
+        [
+          [
+            "Claude give box ",
+            0
+          ],
+          [
+            "bigger belly",
+            1
+          ],
+          [
+            ". Me bonk old small belly.",
+            0
+          ]
+        ],
+        [
+          [
+            "Bug gone. Bug come back later. Bug always come back.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "deployment.yaml",
+          "belly rules"
+        ]
+      ]
+    },
+    {
+      "id": "done",
+      "label": "All good",
+      "sprite": "campfire",
+      "alt": "Caveman warming his hands at a campfire",
+      "status": "Fire good. Me warm.",
+      "meta": "Pod Running · 0 restarts",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Box stand up. Box ",
+            0
+          ],
+          [
+            "stay",
+            1
+          ],
+          [
+            " up. No fall down.",
+            0
+          ]
+        ],
+        [
+          [
+            "Me make fire. We celebrate with mammoth.",
+            0
+          ]
+        ]
+      ],
+      "glossary": [
+        [
+          "Running",
+          "box standing"
+        ]
+      ]
+    },
+    {
+      "id": "idle",
+      "label": "Idle",
+      "sprite": "sleep",
+      "alt": "Caveman asleep standing up",
+      "status": "Zzz… mammoth… zzz",
+      "meta": "Quiet for 20 minutes",
+      "mammoths": 0,
+      "body": [
+        [
+          [
+            "Me sleep. Poke me when Claude talk.",
+            0
+          ]
+        ]
+      ],
+      "glossary": []
+    }
+  ],
+  "levels": [
+    {
+      "name": "Less cave",
+      "status": "Me use more word. Still small word.",
+      "takes": [
+        [
+          [
+            [
+              "Your little box (pod) keep falling down. It run out of belly room (memory), so the kernel stop it. That called ",
+              0
+            ],
+            [
+              "OOMKilled",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "Big Boss Rock (Kubernetes) restart it and wait longer each time: 10, 20, 40 heartbeats, up to five minutes.",
+              0
+            ]
+          ],
+          [
+            [
+              "Box need two mammoth of memory but only allowed one. ",
+              0
+            ],
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " give box more belly (limit 2.5Gi) or make it eat less (heap 768m).",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Caveman",
+      "status": "Me make big words small.",
+      "takes": [
+        [
+          [
+            [
+              "Little box wake up. Little box eat. Little box eat ",
+              0
+            ],
+            [
+              "too much mammoth",
+              1
+            ],
+            [
+              ". Little box fall down.",
+              0
+            ]
+          ],
+          [
+            [
+              "Big Boss Rock pick box up. Box eat. Box fall. Boss Rock wait longer. Then longer. Then LONGER.",
+              0
+            ]
+          ],
+          [
+            [
+              "Box belly fit ",
+              0
+            ],
+            [
+              "one mammoth",
+              1
+            ],
+            [
+              ". Box try eat ",
+              0
+            ],
+            [
+              "two mammoth",
+              1
+            ],
+            [
+              ". Math not work.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " bigger belly. Or smaller mammoth. Me always choose bigger belly.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Box like eat. Box eat mammoth. Box eat ",
+              0
+            ],
+            [
+              "second mammoth",
+              1
+            ],
+            [
+              ". Box belly say NO. Box fall over.",
+              0
+            ]
+          ],
+          [
+            [
+              "Boss Rock pick box up. Boss Rock take nap between tries. Nap get longer. Boss Rock smart. Box not smart.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " make belly big, or mammoth small. Mammoth not shrink. Make belly big.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Story of greedy box. Box hungry. Box eat two mammoth. Box only have room for ",
+              0
+            ],
+            [
+              "one",
+              1
+            ],
+            [
+              ". You know how story end.",
+              0
+            ]
+          ],
+          [
+            [
+              "Boss Rock try again. And again. And AGAIN. Boss Rock good friend. Bad at learning.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " bigger belly. Moral of story: know size of belly.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Very caveman",
+      "status": "UGH. ME EXPLAIN.",
+      "takes": [
+        [
+          [
+            [
+              "Box. Eat. ",
+              0
+            ],
+            [
+              "BOOM",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "Boss Rock: “up, box.” Box: BOOM. Boss Rock sigh. Long sigh.",
+              0
+            ]
+          ],
+          [
+            [
+              "Belly small. Mammoth big. Ugh.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " BIG BELLY.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Literal rock",
+      "status": "Rock.",
+      "takes": [
+        [
+          [
+            [
+              "Rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock.",
+              1
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+}

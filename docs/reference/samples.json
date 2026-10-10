@@ -1,0 +1,144 @@
+{
+  "_note": "Sample main-chat answers and their Cave Talk translations for the mockups. Cave text is meant to be funny, not useful.",
+  "samples": [
+    {
+      "id": "crashloop",
+      "user": "why does my pod keep restarting",
+      "chat": "Your pod is in **CrashLoopBackOff**. The container starts, exceeds its memory limit, and is **OOMKilled**. The JVM heap is set to `-Xmx2g`, but the container limit is `1Gi`, so the kernel kills it as soon as the heap grows. Kubernetes restarts it with exponential backoff: 10s, 20s, 40s, up to 5 minutes.\n\n**Fix:** raise `resources.limits.memory` to `2.5Gi`, or lower the heap to `-Xmx768m` so it fits.",
+      "cave": [
+        "Little box wake up. Little box eat. Little box eat **too much mammoth**. Little box fall down.",
+        "Big Boss Rock pick box up. Box eat. Box fall. Boss Rock wait longer. Then longer. Then LONGER. Boss Rock very patient. Box very dumb.",
+        "Box belly fit **one mammoth**. Box try eat **two mammoth**. Math not work.",
+        "**Fix:** bigger belly. Or smaller mammoth. Me choose bigger belly. Me always choose bigger belly."
+      ],
+      "poses": ["panic", "bonk"],
+      "mammoths": 3,
+      "glossary": [["Pod", "little box"], ["Kubernetes", "Big Boss Rock"], ["Memory limit", "belly"], ["OOMKilled", "eat too much mammoth"], ["Backoff", "Boss Rock nap"]]
+    },
+    {
+      "id": "dns",
+      "user": "service can't reach api.internal",
+      "chat": "Requests to `api.internal` fail with `NXDOMAIN`. CoreDNS forwards to `10.0.0.2`, a resolver that was decommissioned last week. Point the `forward` directive in the `coredns` ConfigMap at the new resolver (`10.0.4.10`) and roll the CoreDNS pods.",
+      "cave": [
+        "Everybody want go Api Cave. Nobody know where Api Cave is.",
+        "Name Rock supposed to know. Name Rock ask Old Wise Rock. Old Wise Rock gone. Retire. Live by lake now. Very happy.",
+        "**Fix:** tell Name Rock about New Wise Rock. Then shake Name Rock little bit.",
+        "It always Name Rock. ALWAYS. Me say this before. Nobody listen to caveman."
+      ],
+      "poses": ["shrug", "impatient"],
+      "mammoths": 2,
+      "glossary": [["DNS", "Name Rock"], ["Resolver", "Wise Rock"], ["NXDOMAIN", "cave not exist"], ["Restart pods", "shake rock"]]
+    },
+    {
+      "id": "merge",
+      "user": "rebase stopped with a conflict",
+      "chat": "Merge conflict in `deploy/values.yaml`: your branch sets `replicas: 3`, `main` sets `replicas: 5`. Choose one, delete the `<<<<<<<`, `=======` and `>>>>>>>` markers, then `git add` the file and `git rebase --continue`.",
+      "cave": [
+        "Two caveman paint same wall. Same spot. Same day.",
+        "One paint **3 mammoth**. Other paint **5 mammoth**. Wall confused. Wall grow angry lines: `<<<<<<<`",
+        "You pick how many mammoth. Wipe angry lines. Tell wall \"is fine.\"",
+        "Me say paint 4 mammoth. Everybody little bit sad. Tribe call this \"compromise.\""
+      ],
+      "poses": ["explaining"],
+      "mammoths": 1,
+      "glossary": [["Branch", "other caveman wall"], ["Conflict markers", "angry lines"], ["Rebase", "repaint wall from start"]]
+    },
+    {
+      "id": "leak",
+      "user": "memory keeps climbing on the worker",
+      "chat": "Heap grows about 50 MB an hour because a new `message` listener is attached on every request and never removed. Detach it in a `finally` block, or register it with `{ once: true }`.",
+      "cave": [
+        "Every time friend visit, program pick up rock. Program never put rock down.",
+        "Pocket full of rock. Program walk slow. Program fall in river.",
+        "**Fix:** when friend leave, put rock down.",
+        "Rock not friend. Rock just rock. Program must learn this."
+      ],
+      "poses": ["explaining", "snack"],
+      "mammoths": 2,
+      "glossary": [["Memory leak", "pocket full of rock"], ["Listener", "rock"], ["Garbage collector", "river"]]
+    },
+    {
+      "id": "race",
+      "user": "inventory count is off under load",
+      "chat": "Two workers read the same `count` before either writes, so one decrement is lost. Use an atomic update (`UPDATE stock SET count = count - 1 WHERE id = $1`) or lock the row with `SELECT ... FOR UPDATE`.",
+      "cave": [
+        "Two caveman see one mammoth leg. Both grab. Same time. Leg rip.",
+        "Each caveman think he have whole leg. Both wrong. Both hungry. Both angry at leg.",
+        "**Fix:** one caveman grab. Other caveman wait.",
+        "Waiting hard. Me know. Me terrible at waiting."
+      ],
+      "poses": ["impatient"],
+      "mammoths": 3,
+      "glossary": [["Race condition", "two caveman one leg"], ["Row lock", "you wait turn"]]
+    },
+    {
+      "id": "build",
+      "user": "run the test suite",
+      "chat": "Build succeeded. 212 tests passed, 3 failed in `test_billing.py`. All three assert on rounding: `Decimal` quantization changed in the refactor.",
+      "cave": [
+        "FIRE MADE. Code cook good.",
+        "Two hundred twelve rock pass. Three rock break. All three rock about counting shell.",
+        "Shell counting hard. Shell round. Number not round.",
+        "Me bonk shell rock."
+      ],
+      "poses": ["flint", "campfire", "bonk"],
+      "mammoths": 1,
+      "glossary": [["Build", "make fire"], ["Test", "rock"], ["Rounding", "shell counting"]]
+    },
+    {
+      "id": "undefined",
+      "user": "TypeError on the profile page",
+      "chat": "`TypeError: Cannot read properties of undefined (reading 'id')`. `user` is `undefined` once the session expires. Guard with `if (!user) return redirect('/login')` before reading `user.id`.",
+      "cave": [
+        "You point at rock. You say \"look, rock.\" No rock there.",
+        "Program look where you point. Program see nothing. Program scream: WHERE ROCK.",
+        "**Fix:** check rock exist. Then point at rock. In that order."
+      ],
+      "poses": ["panic", "shrug"],
+      "mammoths": 2,
+      "glossary": [["undefined", "no rock there"], ["Guard clause", "check rock first"]]
+    },
+    {
+      "id": "loop",
+      "user": "CPU pegged at 100%",
+      "chat": "The `while (retries < max)` loop never increments `retries` on the timeout path, so it spins forever. Increment it in the `catch` block.",
+      "cave": [
+        "Caveman walk around tree. Look for end of tree. Tree round.",
+        "Caveman still walking. Caveman tired. Caveman not stop. Caveman not know HOW stop.",
+        "**Fix:** count step. After ten step, sit down. Eat snack."
+      ],
+      "poses": ["pilates", "snack"],
+      "mammoths": 2,
+      "glossary": [["Infinite loop", "round tree"], ["Retry counter", "count step"]]
+    },
+    {
+      "id": "cors",
+      "user": "browser blocks my API call",
+      "chat": "The browser blocks the request because the API doesn't return `Access-Control-Allow-Origin` for `https://app.example.com`. Add that origin to the API's CORS allowlist.",
+      "cave": [
+        "Cave A want talk Cave B. Guard at Cave B say: \"Who you? No note from chief.\" Cave A cry.",
+        "**Fix:** chief of Cave B write note: \"Cave A okay.\" Nail note to door.",
+        "Guard read note. Guard let talk. Guard still suspicious. Guard always suspicious. Good guard."
+      ],
+      "poses": ["impatient", "explaining"],
+      "mammoths": 1,
+      "glossary": [["CORS", "guard at cave door"], ["Allowlist", "note from chief"]]
+    }
+  ],
+  "status_lines": {
+    "idle": "Me wait. Me watch.",
+    "typing": "You type slow.",
+    "thinking": "Smart rock thinking...",
+    "explaining": "Me make big words small.",
+    "flint": "Me make fire...",
+    "campfire": "Fire good. Me warm.",
+    "happy": "FIRE GOOD!",
+    "bonk": "Me bonk bug.",
+    "panic": "AAAAH. Rock broke.",
+    "shrug": "Me not know.",
+    "sleep": "Zzz... mammoth... zzz",
+    "snack": "Me eat. Tool slow.",
+    "pilates": "Me do core. You wait.",
+    "impatient": "Hurry. Mammoth not wait."
+  }
+}

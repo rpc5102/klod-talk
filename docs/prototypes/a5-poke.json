@@ -1,0 +1,333 @@
+{
+  "board": "R7-Poke",
+  "levels": [
+    {
+      "name": "Less cave",
+      "status": "Me use more word. Still small word.",
+      "takes": [
+        [
+          [
+            [
+              "Your little box (pod) keep falling down. It run out of belly room (memory), so the kernel stop it. That called ",
+              0
+            ],
+            [
+              "OOMKilled",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "Big Boss Rock (Kubernetes) restart it and wait longer each time, up to five minutes.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " give box more belly (limit 2.5Gi) or make it eat less (heap 768m).",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Caveman",
+      "status": "Me make big words small.",
+      "takes": [
+        [
+          [
+            [
+              "Little box wake up. Little box eat ",
+              0
+            ],
+            [
+              "too much mammoth",
+              1
+            ],
+            [
+              ". Little box fall down.",
+              0
+            ]
+          ],
+          [
+            [
+              "Big Boss Rock pick box up. Box eat. Box fall. Boss Rock wait longer. Then LONGER.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " bigger belly. Or smaller mammoth. Me always choose bigger belly.",
+              0
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              "Box like eat. Box eat ",
+              0
+            ],
+            [
+              "second mammoth",
+              1
+            ],
+            [
+              ". Box belly say NO. Box fall over.",
+              0
+            ]
+          ],
+          [
+            [
+              "Boss Rock pick box up. Boss Rock smart. Box not smart.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " make belly big. Mammoth not shrink.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Very caveman",
+      "status": "UGH. ME EXPLAIN.",
+      "takes": [
+        [
+          [
+            [
+              "Box. Eat. ",
+              0
+            ],
+            [
+              "BOOM",
+              1
+            ],
+            [
+              ".",
+              0
+            ]
+          ],
+          [
+            [
+              "Belly small. Mammoth big. Ugh.",
+              0
+            ]
+          ],
+          [
+            [
+              "Fix:",
+              1
+            ],
+            [
+              " BIG BELLY.",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Literal rock",
+      "status": "Rock.",
+      "takes": [
+        [
+          [
+            [
+              "Rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock rock.",
+              0
+            ]
+          ],
+          [
+            [
+              "Rock.",
+              1
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  "followups": {
+    "smaller": {
+      "label": "Fewer words",
+      "sprite": "impatient",
+      "alt": "Caveman with arms crossed, tapping a foot",
+      "status": "Smaller? Me already small.",
+      "meta": "Even fewer words",
+      "paras": [
+        [
+          [
+            "Box eat. Box fall. Box get up. Box eat again.",
+            0
+          ]
+        ],
+        [
+          [
+            "Box dumb. ",
+            0
+          ],
+          [
+            "Bigger belly",
+            1
+          ],
+          [
+            ".",
+            0
+          ]
+        ]
+      ]
+    },
+    "more": {
+      "label": "Tell more",
+      "sprite": "thinking",
+      "alt": "Caveman scratching his head under a question mark",
+      "status": "Me tell long story.",
+      "meta": "More words than you wanted",
+      "paras": [
+        [
+          [
+            "Long ago, before box, there was rock. Rock not eat. Rock happy.",
+            0
+          ]
+        ],
+        [
+          [
+            "Then someone invent box. Box eat. Box ",
+            0
+          ],
+          [
+            "always",
+            1
+          ],
+          [
+            " eat. Tribe call this progress.",
+            0
+          ]
+        ],
+        [
+          [
+            "Box get belly size from ",
+            0
+          ],
+          [
+            "limit",
+            1
+          ],
+          [
+            ". Box eat from ",
+            0
+          ],
+          [
+            "heap",
+            1
+          ],
+          [
+            ". Heap bigger than belly. You see problem.",
+            0
+          ]
+        ]
+      ]
+    },
+    "why": {
+      "label": "Why?",
+      "sprite": "shrug",
+      "alt": "Caveman shrugging, palms up",
+      "status": "Why. Big question.",
+      "meta": "He has thought about this",
+      "paras": [
+        [
+          [
+            "Why box eat two mammoth? Why anything? Me lie awake. Me look at stars. Stars not answer.",
+            0
+          ]
+        ],
+        [
+          [
+            "Also: somebody tell box it can eat ",
+            0
+          ],
+          [
+            "two mammoth",
+            1
+          ],
+          [
+            " but give it belly for ",
+            0
+          ],
+          [
+            "one",
+            1
+          ],
+          [
+            ". That why.",
+            0
+          ]
+        ]
+      ]
+    },
+    "draw": {
+      "label": "Draw it",
+      "sprite": "paint",
+      "alt": "Caveman slapping an ochre hand print onto the screen",
+      "status": "Me paint it.",
+      "meta": "Cave painting of the problem",
+      "painting": "docs/reference/paintings/greedy_box.svg",
+      "paintingAlt": "Cave painting: a box with an open mouth eats two mammoths and bursts; Boss Rock watches; seven tally marks count the restarts",
+      "title": "The Greedy Box.",
+      "caption": "Box eat two mammoth. Box fall down. Boss Rock pick box up. Seven time."
+    }
+  },
+  "order": [
+    "smaller",
+    "more",
+    "why",
+    "draw"
+  ],
+  "pokes": [
+    {
+      "sprite": "shrug",
+      "alt": "Caveman shrugging",
+      "status": "Hey. What.",
+      "meta": "You poked Klod"
+    },
+    {
+      "sprite": "impatient",
+      "alt": "Caveman with arms crossed",
+      "status": "Stop poke. Me working.",
+      "meta": "You poked him again"
+    },
+    {
+      "sprite": "bonk",
+      "alt": "Caveman bonking with a club",
+      "status": "ME BONK FINGER.",
+      "meta": "He did warn you"
+    }
+  ]
+}
