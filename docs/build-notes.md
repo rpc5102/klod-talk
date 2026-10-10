@@ -288,7 +288,7 @@ Ship the kit as code, not files: a small script turns `caveman.json` into `hooks
 ```text
 export register(on, options)
   on session.start                       also after every reload, with timers cancelled
-    $.command.register({ name: 'cave', description: 'Open Cave Talk', immediate: true })
+    $.command.register({ name: 'klod', description: 'Open Cave Talk', immediate: true })
     fill atoms that are still empty; settings = options
     director.evaluate(); sprites.restart()          from what $.state holds
     if cave was chewing, or cave.source.level != settings.level
@@ -300,7 +300,7 @@ export register(on, options)
       $.ui.open({ id: 'cave', title: 'Cave Talk' })   unasked: placed from 144 columns
     return next(e)
 
-  on command.run { command: 'cave' }
+  on command.run { command: 'klod' }
     $.ui.open({ id: 'cave', title: 'Cave Talk' })      asked: placed at any width
     return {}                                          no text: the model reads command output
 
@@ -344,7 +344,7 @@ Done when:
 - [ ] `claude plugin validate` and `tsc -p` are clean
 - [ ] A real turn in a 160-column fullscreen terminal runs Thinking, Snack, Explaining, Happy, and the cave words stream in
 - [ ] Again gives a new take; a level change translates the same answer again
-- [ ] `/cave` opens the pane inline in an 80-column terminal
+- [ ] `/klod` opens the pane inline in an 80-column terminal
 - [ ] The desktop app shows the same turn, the sprite animating
 - [ ] A broken model name gives Shrug and "Me brain hurt.", and Claude's answer is untouched
 - [ ] A hot reload keeps the pane, the pose and the words, and restarts the animation
@@ -546,15 +546,15 @@ Settings follow the Settings board, one row per `userConfig` field, so `/config`
 
 Motion was "Follow system" on the board, but no surface tells a plugin about reduced motion, so the row offers Animate and Still until one does.
 
-One command, `cave`, is registered with `immediate: true`, so `/cave off` works mid-turn. Every subcommand answers with no text, because the model reads command output.
+One command, `klod`, is registered with `immediate: true`, so `/klod off` works mid-turn. Every subcommand answers with no text, because the model reads command output.
 
 ```text
-/cave                    open the pane (or wake him if he was sent home)
-/cave explain <text>     translate <text> in the pane; no Claude turn
-/cave level <level>      less | caveman | very | rock
-/cave grunt <volume>     off | quiet | loud
-/cave settings           open the settings view
-/cave off                close the pane, cancel every timer, stop translating
+/klod                    open the pane (or wake him if he was sent home)
+/klod explain <text>     translate <text> in the pane; no Claude turn
+/klod level <level>      less | caveman | very | rock
+/klod grunt <volume>     off | quiet | loud
+/klod settings           open the settings view
+/klod off                close the pane, cancel every timer, stop translating
 ```
 
 The pane meets each surface differently:
@@ -569,7 +569,7 @@ Done when:
 - [ ] Each of the six moments reproduces from a scripted session
 - [ ] Jokes off lasts until Jokes back on, across hot reloads
 - [ ] Every settings row round-trips between `/config` and the pane
-- [ ] Every `/cave` subcommand works, and `/cave off` leaves no timer running
+- [ ] Every `/klod` subcommand works, and `/klod off` leaves no timer running
 - [ ] The band shows whenever the pane isn't placed
 
 ## Accessibility, motion and sound
@@ -637,7 +637,7 @@ Check these in a real session before writing code; each one changes a design cho
 - [ ] Does every approved tool draw a `ToolProgress` row? Sign ends there; without one, it lasts until the call settles.
 - [ ] Does `classic.PermissionRequest` fire for every dialog the person sees, MCP tools included?
 - [ ] How does pane text reach a screen reader on each surface, and can one `Text` be announced politely, once? This decides the one-announcement rule and whether Text only should be the terminal's default.
-- [ ] Does `/cave` still leave a command record the model reads when it answers with no text? If so, `/cave explain` puts pasted text in Claude's context, against the board's promise.
+- [ ] Does `/klod` still leave a command record the model reads when it answers with no text? If so, `/klod explain` puts pasted text in Claude's context, against the board's promise.
 - [ ] Does `$.state` survive a /clear, or must `session.end` with reason `clear` rebuild every atom?
 - [ ] Does `prompt.edit` fire for the desktop app's prompt box? Impatient depends on it.
 - [ ] Does a redraw restart the SMIL animation in an interactive `Svg`, and is it smooth in the desktop app?

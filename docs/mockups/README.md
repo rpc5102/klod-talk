@@ -12,7 +12,7 @@ canvas, so here each one shows a single moment; its scene data is in
 | **Phase 1: the pane, Klod, the translation** | |
 | [R2-A2-Prototype](R2-A2-Prototype.png) | The chosen pane design, A2 Stone Tablet, mid-answer |
 | [R11-Pane-Anatomy](R11-Pane-Anatomy.png) | Every part of the pane, numbered, with what each does |
-| [R4-First-Run](R4-First-Run.png) | What `/cave` shows the first time |
+| [R4-First-Run](R4-First-Run.png) | What `/klod` shows the first time |
 | [R3-Terminal-Dock](R3-Terminal-Dock.png) | Fullscreen terminal, with the pane docked beside the transcript |
 | [R3-Terminal-Inline](R3-Terminal-Inline.png) | Narrow terminal, with the pane inline |
 | [R2-A2-Cave-Levels](R2-A2-Cave-Levels.png) | One answer at each of the four cave levels |
@@ -35,7 +35,7 @@ canvas, so here each one shows a single moment; its scene data is in
 | [R8-Mini-Band](R8-Mini-Band.png) | The folded band above the prompt when the pane isn't placed |
 | [R10-Settings](R10-Settings.png) | The settings view, full length |
 | [R10-Dictionary](R10-Dictionary.png) | The Words tab: the cave dictionary and Teach a word |
-| [R10-Cave-Explain](R10-Cave-Explain.png) | `/cave explain`, which asks on purpose and answers in the pane |
+| [R10-Cave-Explain](R10-Cave-Explain.png) | `/klod explain`, which asks on purpose and answers in the pane |
 | **Every phase** | |
 | [R9-Accessibility](R9-Accessibility.png) | Contrast, announcements, motion and keys |
 
@@ -51,6 +51,9 @@ the mod API forced:
 - **Motion.** The settings board offers "Follow system". No surface tells a mod
   about reduced motion, so the setting is Animate or Still.
 - **Copy.** It works in the terminal only, for now.
+
+One change came later, by choice rather than by the API: the command is
+`/klod`. The boards still show it as `/cave`.
 
 ## Boards left out
 
