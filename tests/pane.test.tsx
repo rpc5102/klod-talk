@@ -160,14 +160,14 @@ test('the terminal sprite animates by blits, and a redraw draws the frame last s
   expect(await ui.find({ type: 'Raster' })).toMatchObject({ props: { cells: frameCells('idle', 0) } })
 })
 
-test('/cave opens the pane and answers with no text for the model to read', { plugins: [PEEK] }, async ($, on) => {
+test('/klod opens the pane and answers with no text for the model to read', { plugins: [PEEK] }, async ($, on) => {
   const w = world($, on)
   await w.start()
   expect(w.received['command.register']).toEqual([
-    { name: 'cave', description: 'Open Cave Talk', immediate: true },
+    { name: 'klod', description: 'Open Cave Talk', immediate: true },
   ])
   const run = await $.command.run({
-    command: 'cave',
+    command: 'klod',
     args: '',
     origin: { kind: 'composer' },
     presentation: { isFullscreen: false, columns: 80 },

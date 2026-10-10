@@ -109,7 +109,7 @@ export const register: Register = (on, options) => {
   // Also after every reload, with every timer cancelled: fill what is empty,
   // then restart the wake timer, his frames and any translation in progress.
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'cave', description: 'Open Cave Talk', immediate: true })
+    await $.command.register({ name: 'klod', description: 'Open Cave Talk', immediate: true })
     const port = portFor($)
     await port.work(async () => {
       const { version } = await $.state.get({ plugin: 'cave-talk', key: 'session' })
@@ -148,7 +148,7 @@ export const register: Register = (on, options) => {
   })
 
   // Asked: placed at any width. No text, because the model reads command output.
-  on('command.run', { command: 'cave' }, async $ => {
+  on('command.run', { command: 'klod' }, async $ => {
     const rows = paneRows((await read($, display)).terminalArt)
     await $.ui.open({ id: 'cave', title: TITLE, rows })
 

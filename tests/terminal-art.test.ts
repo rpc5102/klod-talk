@@ -54,7 +54,7 @@ test('in Ghostty he is a real image at half the cells, every pixel kept, and ani
 
   // The pane asks for less room inline: Klod is half as tall.
   await $.command.run({
-    command: 'cave',
+    command: 'klod',
     args: '',
     origin: { kind: 'composer' },
     presentation: { isFullscreen: false, columns: 80 },

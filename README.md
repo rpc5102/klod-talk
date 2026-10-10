@@ -24,7 +24,7 @@ terminal:
 ```
 
 Answer `y` to add the marketplace, pick a scope (user installs it everywhere),
-and set the options or keep the defaults. Then type `/cave`. Installed from a
+and set the options or keep the defaults. Then type `/klod`. Installed from a
 terminal at the user scope, it also loads in the desktop app's Code tab.
 
 That line installs what is on `main`. To try a branch Claude is still working

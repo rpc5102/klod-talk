@@ -81,7 +81,7 @@ this repo.
    - which open questions from the notes you answered, and which still need a
      real session;
    - how to try it: `claude --plugin-dir <his clone>` from any project, then
-     `/cave`. Mods need Claude Code 2.1.287 or later.
+     `/klod`. Mods need Claude Code 2.1.287 or later.
 
 ## Still open with Bob
 

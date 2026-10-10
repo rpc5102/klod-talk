@@ -15,7 +15,7 @@
     "autoOpen": {
       "type": "boolean",
       "title": "Open at start",
-      "description": "Open the Cave Talk pane by itself in a fullscreen terminal 144 columns or wider. /cave opens it at any width.",
+      "description": "Open the Cave Talk pane by itself in a fullscreen terminal 144 columns or wider. /klod opens it at any width.",
       "default": true
     },
     "model": {
