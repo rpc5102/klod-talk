@@ -1,0 +1,11 @@
+{
+  "name": "klod-talk",
+  "description": "Cave Talk, a Claude Code mod: Claude's answers retold in caveman speak, beside Klod the pixel caveman.",
+  "owner": { "name": "Bob Carey" },
+  "plugins": [
+    {
+      "name": "cave-talk",
+      "source": "./"
+    }
+  ]
+}
