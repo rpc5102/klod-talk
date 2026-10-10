@@ -5,15 +5,18 @@
 
 import type { EngineInterface, RenderInput } from 'claude-code'
 
-import type { CaveSettings, CaveWords, PoseState, Segment } from '../types'
+import type { CaveSettings, CaveWords, DisplayFacts, PoseState, Segment } from '../types'
 import { plainText } from './reply'
 import { LEVELS, levelInfo } from './settings'
 import {
   COLUMNS,
+  IMAGE_COLUMNS,
+  IMAGE_ROWS,
   ROWS,
   SPRITE_KEY,
   describe,
   frameCells,
+  framePath,
   frameShown,
   poseSvg,
 } from './sprites'
@@ -27,6 +30,9 @@ export type PaneState = {
   pose: PoseState
   cave: CaveWords
   settings: CaveSettings
+  display: DisplayFacts
+  /** The plugin's folder, where the image frames are. */
+  root: string
 }
 
 export type PaneActions = {
@@ -65,7 +71,21 @@ export function copyText(words: CaveWords): string {
   return shownParagraphs(words).map(plainText).join('\n\n')
 }
 
-function sprite(e: PaneInput, resolve: Resolve, state: PoseState) {
+function sprite(e: PaneInput, resolve: Resolve, pane: PaneState) {
+  const state = pane.pose
+  if (e.surface === 'terminal' && pane.display.terminalArt === 'image') {
+    const { Image } = resolve(e)
+    const file = framePath(pane.root, state.name, frameShown(state))
+    return (
+      <Image
+        key={SPRITE_KEY}
+        source={{ file, format: 'png' }}
+        columns={IMAGE_COLUMNS}
+        rows={IMAGE_ROWS}
+        alt={describe(state.name)}
+      />
+    )
+  }
   if (e.surface === 'terminal') {
     const { Raster } = resolve(e)
     return (
@@ -79,15 +99,24 @@ function sprite(e: PaneInput, resolve: Resolve, state: PoseState) {
   }
   const { Svg } = resolve(e)
 
+  // Drawn as an image, not in an interactive frame: a frame painted a white
+  // box in the desktop app's dark mode and reloaded, flickering, on a click.
   return (
     <Svg
       source={poseSvg(state.name, state.isStill)}
       alt={describe(state.name)}
       width={SVG_SIZE}
       height={SVG_SIZE}
-      isInteractive
     />
   )
+}
+
+/** How many columns the sprite takes on this surface. */
+function spriteColumns(e: PaneInput, pane: PaneState): number {
+  if (e.surface !== 'terminal') {
+    return 18
+  }
+  return pane.display.terminalArt === 'image' ? IMAGE_COLUMNS : COLUMNS
 }
 
 export function draw(e: PaneInput, resolve: Resolve, state: PaneState, actions: PaneActions) {
@@ -95,7 +124,7 @@ export function draw(e: PaneInput, resolve: Resolve, state: PaneState, actions: 
   const { pose, cave: words } = state
   const columns = e.props.bodyColumns
   const isTerminal = e.surface === 'terminal'
-  const isWide = columns >= (isTerminal ? COLUMNS + 18 : 36)
+  const isWide = columns >= spriteColumns(e, state) + 18
 
   const paragraph = (segments: readonly Segment[]) => (
     <Text>
@@ -127,7 +156,7 @@ export function draw(e: PaneInput, resolve: Resolve, state: PaneState, actions: 
         alignItems={isWide ? 'center' : 'flex-start'}
         gap={isWide ? 2 : 0}
       >
-        {sprite(e, resolve, pose)}
+        {sprite(e, resolve, state)}
         <Box flexDirection="column" flexShrink={1}>
           <Text bold>{pose.status}</Text>
           <Text dimColor>{pose.meta}</Text>

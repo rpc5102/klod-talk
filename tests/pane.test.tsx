@@ -51,9 +51,10 @@ test('the pane draws Klod, his lines and the controls on each surface', { plugin
           alt: CATALOG.poses.idle.description,
           width: 128,
           height: 128,
-          isInteractive: true,
         },
       })
+      // A plain image, not an interactive frame, which painted a white box and flickered.
+      expect((await ui.find({ type: 'Svg' }))?.props['isInteractive']).toBeUndefined()
       expect(await ui.find({ key: 'copy' })).toBeUndefined()
       expect(await ui.find({ type: 'Raster' })).toBeUndefined()
     }

@@ -16,9 +16,23 @@ export const PANE_ID = 'cave'
 /** The Raster's key, which $.ui.blit names. */
 export const SPRITE_KEY = 'sprite'
 
-/** The terminal sprite: 32 columns by 16 rows, two pixels per cell. */
+/** The terminal sprite in cells: 32 columns by 16 rows, two pixels per cell. */
 export const COLUMNS = CATALOG.width
 export const ROWS = CATALOG.height / 2
+
+/** The terminal sprite as a real image: half the cells, every pixel kept. */
+export const IMAGE_COLUMNS = COLUMNS / 2
+export const IMAGE_ROWS = ROWS / 2
+
+/** A frame's PNG, written by scripts/gen-frames.mjs, which the terminal reads itself. */
+export function framePath(root: string, name: PoseName, frame: number): string {
+  return `${root.replace(/\/+$/, '')}/assets/frames/${name}_${frame}.png`
+}
+
+/** A blit refused because the terminal draws the Image's alt: it shows no images. */
+export function showsNoImages(refusal: string | undefined): boolean {
+  return refusal !== undefined && /\balt\b/i.test(refusal)
+}
 
 /** The terminal's default colour. */
 const DEFAULT_COLOR = 0x01000000
@@ -216,7 +230,19 @@ function next(port: Port, current: Animation): void {
     current.frame = (current.frame + 1) % frames.length
     // A blit with no terminal pane mounted is refused; the chain goes on, so
     // a pane placed later animates at once.
-    void port.blit(frameCells(current.pose, current.frame)).catch(() => undefined)
+    void paint(port, current.pose, current.frame).catch(() => undefined)
     next(port, current)
   })
+}
+
+async function paint(port: Port, name: PoseName, frame: number): Promise<void> {
+  if ((await port.terminalArt()) === 'cells') {
+    await port.blitCells(frameCells(name, frame))
+    return
+  }
+  const refusal = await port.blitImage(framePath(port.root, name, frame))
+  if (showsNoImages(refusal)) {
+    // This terminal draws the alt in its place: cells from now on.
+    await port.work(() => port.setTerminalArt('cells'))
+  }
 }

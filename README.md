@@ -37,6 +37,10 @@ on, add `#` and the branch name to the marketplace:
 The pane opens by itself in a fullscreen terminal 144 columns or wider. The cave
 level, the translation model and "Open at start" are in `/config`.
 
+In Ghostty and kitty, which show real images, Klod is drawn as one at 16 by 8
+cells with every pixel. Other terminals draw him in half-block characters at 32
+by 16 cells.
+
 ### Getting a new phase
 
 `plugin.json` has no `version` on purpose: an install follows the commits of
@@ -66,13 +70,14 @@ that session, so there is no need to uninstall.
 | [kit/](kit/) | Klod's sprite kit: 28 poses, the source of every frame |
 | [CLAUDE.md](CLAUDE.md) | How Claude Code sessions build this repo |
 | `.claude-plugin/`, `hooks/`, `types/` | The mod: its manifest, the marketplace file that lists it, its hooks module and parts, and its `$.state` contract |
-| [scripts/](scripts/) | Generate `hooks/catalog.ts`, `hooks/words.ts` and `tests/fixtures.ts` from the data above |
+| `assets/frames/` | Every frame as a 256 by 256 PNG, which Ghostty and kitty read to draw Klod |
+| [scripts/](scripts/) | Generate `hooks/catalog.ts`, `hooks/words.ts`, `assets/frames/` and `tests/fixtures.ts` from the data above |
 | [tests/](tests/) | Unit tests and engine scenarios for `claude plugin test` |
 
 ## Checking a change
 
 ```bash
-node scripts/gen-catalog.mjs --check   # and gen-words, gen-fixtures: generated files are current
+node scripts/gen-catalog.mjs --check   # and gen-words, gen-frames, gen-fixtures: generated files are current
 claude plugin validate .
 tsc -p .                               # needs the types Claude Code lays in .claude-plugin/types/
 claude plugin test .

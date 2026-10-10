@@ -6,7 +6,7 @@
 
 import type { ModelCompleteRequest, ModelCompleteResult, Timer } from 'claude-code'
 
-import type { CaveSettings, CaveWords, PoseState, SessionFacts } from '../types'
+import type { CaveSettings, CaveWords, PoseState, SessionFacts, TerminalArt } from '../types'
 
 export type Port = {
   /** Milliseconds since the epoch, now. */
@@ -23,8 +23,16 @@ export type Port = {
   pose: () => Promise<PoseState>
   setPose: (next: PoseState) => Promise<void>
   settings: () => Promise<CaveSettings>
-  /** Paints a frame into the terminal sprite without a redraw. */
-  blit: (cells: string) => Promise<void>
+  /** The plugin's folder, absolute: the image frames are under it. */
+  root: string
+  terminalArt: () => Promise<TerminalArt>
+  setTerminalArt: (art: TerminalArt) => Promise<void>
+  /** Paints cells into the terminal sprite without a redraw; resolves why not, when refused. */
+  blitCells: (cells: string) => Promise<string | undefined>
+  /** Swaps the terminal sprite's image file; resolves why not, when refused. */
+  blitImage: (file: string) => Promise<string | undefined>
+  /** True where the environment names kitty or Ghostty, which show real images. */
+  isImageTerminal: () => Promise<boolean>
   complete: (request: ModelCompleteRequest, signal: AbortSignal) => Promise<ModelCompleteResult>
   /** The model Claude itself runs on. */
   claudeModel: () => Promise<string>

@@ -18,7 +18,7 @@ import type {
   UiCopyArgs,
 } from 'claude-code'
 
-import type { CaveSettings, CaveWords, PoseState, SessionFacts } from '../types'
+import type { CaveSettings, CaveWords, DisplayFacts, PoseState, SessionFacts } from '../types'
 import type { Seg } from './fixtures'
 
 /** A fixed moment to start the clock at: Oct 9, 2026. */
@@ -34,6 +34,7 @@ export const PEEK: Plugin = {
         pose: (await $.state.get({ plugin: 'cave-talk', key: 'pose' })).value ?? null,
         cave: (await $.state.get({ plugin: 'cave-talk', key: 'cave' })).value ?? null,
         settings: (await $.state.get({ plugin: 'cave-talk', key: 'settings' })).value ?? null,
+        display: (await $.state.get({ plugin: 'cave-talk', key: 'display' })).value ?? null,
       }
       return { text: JSON.stringify(atoms) }
     })
@@ -45,6 +46,7 @@ export type Atoms = {
   pose: PoseState
   cave: CaveWords
   settings: CaveSettings
+  display: DisplayFacts
 }
 
 /** How the model answers one call; 'refuse' is the engine refusing to send it. */
@@ -112,7 +114,10 @@ export type World = {
   /** How the model answers the next calls; the default answers at once. */
   answer: ModelAnswer
   opened: PaneOpenArgs[]
-  blits: { requestId: string; key: string }[]
+  /** Every blit the sprite chain made: cells, or an image file by its path. */
+  blits: { requestId: string; key: string; file?: string }[]
+  /** How the terminal answers the next blits: nothing taken, or why not. */
+  refuseBlit: () => string | undefined
   copies: UiCopyArgs[]
   configSets: ConfigSetArgs[]
   logs: string[]
@@ -148,9 +153,12 @@ function mountPane($: Engine, surface: 'terminal' | 'desktop', viewport?: Render
   })
 }
 
-export function world($: Engine, on: On): World {
+/** The terminal's environment for a test: TERM, TERM_PROGRAM and the rest. */
+export type WorldOptions = { env?: Readonly<Record<string, string>> }
+
+export function world($: Engine, on: On, options: WorldOptions = {}): World {
   const clock = mock.clock(on, { now: START })
-  mock.env(on, {})
+  mock.env(on, options.env ?? {})
   const received: Record<string, unknown[]> = {}
   const keep = (event: string, e: unknown) => {
     ;(received[event] ??= []).push(e)
@@ -162,6 +170,7 @@ export function world($: Engine, on: On): World {
     answer: () => answered('SIZE 1\nMe fine.'),
     opened: [],
     blits: [],
+    refuseBlit: () => undefined,
     copies: [],
     configSets: [],
     logs: [],
@@ -220,8 +229,10 @@ export function world($: Engine, on: On): World {
     return { value: { isPlaced: true } }
   })
   on('ui.blit', ($, e) => {
-    w.blits.push({ requestId: e.requestId, key: e.key })
-    return { value: {} }
+    const file = 'source' in e && 'file' in e.source ? e.source.file : undefined
+    w.blits.push({ requestId: e.requestId, key: e.key, ...(file === undefined ? {} : { file }) })
+    const refusal = w.refuseBlit()
+    return { value: refusal === undefined ? {} : { deny: refusal } }
   })
   on('ui.copy', ($, e) => {
     w.copies.push(e)

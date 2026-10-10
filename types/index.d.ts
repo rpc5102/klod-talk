@@ -151,6 +151,17 @@ export type CaveWords = {
   problem: string | null
 }
 
+/**
+ * How the terminal draws Klod: a real image where it shows them (kitty,
+ * Ghostty), or half-block cells everywhere else.
+ */
+export type TerminalArt = 'image' | 'cells'
+
+/** What the surfaces can draw, as Cave Talk found out. */
+export type DisplayFacts = {
+  terminalArt: TerminalArt
+}
+
 /** A copy of the userConfig options. */
 export type CaveSettings = {
   level: CaveLevel
@@ -165,6 +176,7 @@ declare module 'claude-code' {
       pose: PoseState
       cave: CaveWords
       settings: CaveSettings
+      display: DisplayFacts
     }
   }
 }

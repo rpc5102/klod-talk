@@ -9,7 +9,8 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import { DEFAULT_SETTINGS, EMPTY_CAVE, EMPTY_FACTS, FIRST_POSE } from './atoms'
+import type { TerminalArt } from '../types'
+import { DEFAULT_SETTINGS, EMPTY_CAVE, EMPTY_FACTS, FIRST_DISPLAY, FIRST_POSE } from './atoms'
 import * as director from './director'
 import { lane } from './lane'
 import type { Port } from './port'
@@ -24,10 +25,14 @@ const session = atom({ plugin: 'cave-talk', key: 'session' } as const, EMPTY_FAC
 const pose = atom({ plugin: 'cave-talk', key: 'pose' } as const, FIRST_POSE)
 const cave = atom({ plugin: 'cave-talk', key: 'cave' } as const, EMPTY_CAVE)
 const settings = atom({ plugin: 'cave-talk', key: 'settings' } as const, DEFAULT_SETTINGS)
+const display = atom({ plugin: 'cave-talk', key: 'display' } as const, FIRST_DISPLAY)
 
 const TITLE = 'Cave Talk'
+
 /** Inline above the prompt, the pane asks for room for Klod and a few paragraphs. */
-const PANE_ROWS = 24
+function paneRows(art: TerminalArt): number {
+  return art === 'image' ? 16 : 24
+}
 /** Keystrokes closer together than this are one fact change. */
 const TYPING_STEP_MS = 200
 
@@ -54,8 +59,22 @@ function portFor($: EngineInterface): Port {
       await update($, pose, () => next)
     },
     settings: () => read($, settings),
-    blit: async cells => {
-      await $.ui.blit({ requestId: 'cave', key: sprites.SPRITE_KEY, cells })
+    root: $.plugin.root,
+    terminalArt: async () => (await read($, display)).terminalArt,
+    setTerminalArt: async art => {
+      await update($, display, facts => ({ ...facts, terminalArt: art }))
+    },
+    blitCells: async cells => (await $.ui.blit({ requestId: 'cave', key: sprites.SPRITE_KEY, cells })).deny,
+    blitImage: async file =>
+      (await $.ui.blit({ requestId: 'cave', key: sprites.SPRITE_KEY, source: { file, format: 'png' } }))
+        .deny,
+    isImageTerminal: async () => {
+      const [term, program, kitty] = await Promise.all([
+        $.env.get('TERM'),
+        $.env.get('TERM_PROGRAM'),
+        $.env.get('KITTY_WINDOW_ID'),
+      ])
+      return /kitty|ghostty/i.test(`${term ?? ''} ${program ?? ''}`) || (kitty ?? '') !== ''
     },
     complete: (request, signal) => $.model.complete(request, { signal }),
     claudeModel: () => $.session.model(),
@@ -105,6 +124,10 @@ export const register: Register = (on, options) => {
         await port.setPose({ ...FIRST_POSE, since: now })
       }
       await update($, settings, () => configured)
+      // Once per session: kitty and Ghostty show him as a real image, the rest in cells.
+      if ((await $.state.get({ plugin: 'cave-talk', key: 'display' })).version === 0) {
+        await port.setTerminalArt((await port.isImageTerminal()) ? 'image' : 'cells')
+      }
       await director.evaluate(port)
       sprites.restart(port, await port.pose())
       await translator.resume(port)
@@ -114,10 +137,11 @@ export const register: Register = (on, options) => {
   })
 
   // A pass-through that opens the pane once, unasked, where it would be a sidebar.
-  on('ui.render', { component: 'AbovePrompt' }, ($, e, next) => {
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (configured.autoOpen && e.viewport?.isFullscreen === true && !hasAutoOpened) {
       hasAutoOpened = true
-      void $.ui.open({ id: 'cave', title: TITLE, rows: PANE_ROWS })
+      const rows = paneRows((await read($, display)).terminalArt)
+      void $.ui.open({ id: 'cave', title: TITLE, rows })
     }
 
     return next(e)
@@ -125,7 +149,8 @@ export const register: Register = (on, options) => {
 
   // Asked: placed at any width. No text, because the model reads command output.
   on('command.run', { command: 'cave' }, async $ => {
-    await $.ui.open({ id: 'cave', title: TITLE, rows: PANE_ROWS })
+    const rows = paneRows((await read($, display)).terminalArt)
+    await $.ui.open({ id: 'cave', title: TITLE, rows })
 
     return {}
   })
@@ -213,6 +238,8 @@ export const register: Register = (on, options) => {
       pose: await read($, pose),
       cave: await read($, cave),
       settings: await read($, settings),
+      display: await read($, display),
+      root: $.plugin.root,
     }
 
     return draw(e, input => $.ui.resolve(input), state, {

@@ -2,7 +2,7 @@
 // themselves are consts in register.tsx, where the engine's scan can list
 // them; their types are declared once in types/index.d.ts.
 
-import type { CaveSettings, CaveWords, PoseState, SessionFacts } from '../types'
+import type { CaveSettings, CaveWords, DisplayFacts, PoseState, SessionFacts } from '../types'
 
 export const EMPTY_FACTS: SessionFacts = {
   turn: null,
@@ -38,6 +38,10 @@ export const EMPTY_CAVE: CaveWords = {
   glossary: [],
   announce: '',
   problem: null,
+}
+
+export const FIRST_DISPLAY: DisplayFacts = {
+  terminalArt: 'cells',
 }
 
 export const DEFAULT_SETTINGS: CaveSettings = {
