@@ -371,7 +371,7 @@ Done when:
 - [ ] A hot reload keeps the pane, the pose and the words, and restarts the animation
 - [x] The director's fake-clock tests pass
 
-Phase 1 as built also makes these choices where the notes were silent. Each is Bob's to change:
+Phase 1 as built also makes these choices where the notes were silent. Each is Bob's to change (#6); the checks above still to try by hand are #5:
 
 - **Lines with no source in the docs.** The meta lines "Nothing happening" (Idle), "Claude finished" (Happy), "Claude asked you something", "Claude declined this one" and "The turn ended on an API error" (Shrug), and "Claude hit an API error" (Panic). Explaining's meta, "Cave version of Claude's answer", is from the Accessibility board, and Happy's line, "All green. Me happy.", from the A4 and A6 prototypes.
 - **A question for you** means the answer's last line of prose ends in a question mark, until Phase 2's `classic.PermissionRequest` hook catches `AskUserQuestion`.
@@ -665,18 +665,18 @@ The canvas prototypes (A3 live session, A4 tool session, A6 quiet time) already 
 
 ## Open questions
 
-Check these in a real session; each one changes a design choice above. The API types already settled the rest (auto-mode asks, `precompute` compactions, reduced motion, timers across reloads), and building Phase 1 settled where `$` may go (Architecture).
+Check these in a real session; each one changes a design choice above. The API types already settled the rest (auto-mode asks, `precompute` compactions, reduced motion, timers across reloads), and building Phase 1 settled where `$` may go (Architecture). Each open one is a GitHub issue, numbered after it, in the repo's backlog.
 
-- [ ] Does every approved tool draw a `ToolProgress` row? Sign ends there; without one, it lasts until the call settles.
-- [ ] Does `classic.PermissionRequest` fire for every dialog the person sees, MCP tools included?
-- [ ] How does pane text reach a screen reader on each surface, and can one `Text` be announced politely, once? This decides the one-announcement rule and whether Text only should be the terminal's default.
-- [ ] Does `/klod` still leave a command record the model reads when it answers with no text? If so, `/klod explain` puts pasted text in Claude's context, against the board's promise.
-- [ ] Does `$.state` survive a /clear, or must `session.end` with reason `clear` rebuild every atom?
-- [ ] Does `prompt.edit` fire for the desktop app's prompt box? Impatient depends on it.
+- [ ] Does every approved tool draw a `ToolProgress` row? Sign ends there; without one, it lasts until the call settles. (#11)
+- [ ] Does `classic.PermissionRequest` fire for every dialog the person sees, MCP tools included? (#12)
+- [ ] How does pane text reach a screen reader on each surface, and can one `Text` be announced politely, once? This decides the one-announcement rule and whether Text only should be the terminal's default. (#10)
+- [ ] Does `/klod` still leave a command record the model reads when it answers with no text? If so, `/klod explain` puts pasted text in Claude's context, against the board's promise. (#7)
+- [ ] Does `$.state` survive a /clear, or must `session.end` with reason `clear` rebuild every atom? (#8)
+- [ ] Does `prompt.edit` fire for the desktop app's prompt box? Impatient depends on it. (#9)
 - [x] Does a redraw restart the SMIL animation in an interactive `Svg`, and is it smooth in the desktop app? It reloads: a click in the pane redrew it and Klod flickered, and in dark mode the frame painted a white box behind him. The sprite is now drawn as an image.
-- [ ] Does the desktop app run the SMIL animation in an `Svg` drawn as an image? If he stands still there, the frame needs another fix: declare a light and dark colour scheme on the SVG and keep `isInteractive`.
-- [ ] Is Klod crisp in Ghostty and kitty as an `Image`, and do the frame swaps run without flicker?
-- [ ] Bob's first real translations failed, though the same call worked in a cloud session. Now the pane says why ("Translation failed: …"): what does it say?
-- [ ] During Snack, "Me chew big words…" shows twice: as his status line (from the A3 prototype) and as the tablet's dim line (from the view above). Which one goes?
-- [ ] How good are Haiku's scene plans? Run 20 real answers through the planner before growing the motif list.
-- [ ] What does a translation cost per answer? Log `usage` from `$.model.complete` over a week of real sessions before choosing Haiku as the default for good. First numbers, from one real answer at low effort: about 1.4 s, 170 output tokens, and the 736-token fixed prompt read from the cache after the first call.
+- [ ] Does the desktop app run the SMIL animation in an `Svg` drawn as an image? If he stands still there, the frame needs another fix: declare a light and dark colour scheme on the SVG and keep `isInteractive`. (#2)
+- [ ] Is Klod crisp in Ghostty and kitty as an `Image`, and do the frame swaps run without flicker? (#3)
+- [ ] Bob's first real translations failed, though the same call worked in a cloud session. Now the pane says why ("Translation failed: …"): what does it say? (#1)
+- [ ] During Snack, "Me chew big words…" shows twice: as his status line (from the A3 prototype) and as the tablet's dim line (from the view above). Which one goes? (#4)
+- [ ] How good are Haiku's scene plans? Run 20 real answers through the planner before growing the motif list. (#13)
+- [ ] What does a translation cost per answer? Log `usage` from `$.model.complete` over a week of real sessions before choosing Haiku as the default for good. First numbers, from one real answer at low effort: about 1.4 s, 170 output tokens, and the 736-token fixed prompt read from the cache after the first call. (#14)

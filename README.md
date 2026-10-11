@@ -59,6 +59,12 @@ From a clone, `claude --plugin-dir /path/to/klod-talk` loads your working copy
 instead, with hot reload. It replaces an installed copy of the same name for
 that session, so there is no need to uninstall.
 
+## Backlog
+
+Open work, checks to try by hand, and decisions waiting on Bob are
+[GitHub issues](https://github.com/rpc5102/klod-talk/issues), labelled by phase
+and kind (`check by hand`, `needs decision`, `question`).
+
 ## What's here
 
 | Path | What it holds |
