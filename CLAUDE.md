@@ -81,15 +81,16 @@ this repo.
    - which open questions from the notes you answered, and which still need a
      real session;
    - how to try it: `claude --plugin-dir <his clone>` from any project, then
-     `/cave`. Mods need Claude Code 2.1.287 or later.
+     `/klod`. Mods need Claude Code 2.1.287 or later.
 
 ## Still open with Bob
 
-Ask him before you build any of these:
+The backlog is the repo's GitHub issues: read the open ones for your phase
+before you start. Ask him before you build any of these:
 
-- **Poke (Phase 3).** Should it be a button beside Klod, or should Klod be drawn
+- **Poke (Phase 3, #15).** Should it be a button beside Klod, or should Klod be drawn
   as coloured text cells so a click on him works? Text cells only work in the
   terminal and the Desktop app.
-- **Paintings in the terminal (Phase 3).** Caption only, or a second painter that
+- **Paintings in the terminal (Phase 3, #16).** Caption only, or a second painter that
   draws the same scene plan in half-block characters?
-- **Sounds.** There are no grunt files yet. Ask before adding any.
+- **Sounds (#17).** There are no grunt files yet. Ask before adding any.
