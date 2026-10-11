@@ -1,6 +1,7 @@
 // The world beneath Cave Talk in an engine test: a mocked clock and
-// environment, an answer for every call the mod makes on `$`, a record of
-// what reached the bottom of each event, and a peek at the mod's atoms.
+// environment, an answer for every call the mod makes on `$`, tools that
+// answer as told (after a while, with a dialog first, or failing), a record
+// of what reached the bottom of each event, and a peek at the mod's atoms.
 
 import { expect, mock } from 'claude-code/testing'
 import type { Engine, MockClock, Plugin } from 'claude-code/testing'
@@ -14,7 +15,10 @@ import type {
   PromptEditInput,
   RenderPropsOf,
   RenderSurface,
+  RenderElement,
   RenderViewport,
+  ToolCallInput,
+  ToolCallResult,
   UiCopyArgs,
 } from 'claude-code'
 
@@ -107,6 +111,19 @@ export const PANE_PROPS: RenderPropsOf['Pane'] = {
   view: {},
 }
 
+/** How a tool call answers at the bottom; the default answers at once. */
+export type ToolAnswer = (e: ToolCallInput) => Promise<ToolCallResult> | ToolCallResult
+
+/** A tool's answer: its record, and the text the model reads. */
+export function toolResult(result: unknown, text: string): ToolCallResult {
+  return { result, text } as ToolCallResult
+}
+
+/** A tool that reported an error, as a failing Bash command does. */
+export function toolError(text: string): ToolCallResult {
+  return { isError: true, result: text, text }
+}
+
 export type World = {
   clock: MockClock
   /** Every model call the mod made, in order. */
@@ -130,6 +147,16 @@ export type World = {
   turnStart: (turnId: string) => Promise<void>
   turnComplete: (answer: string, turnId: string, reason?: 'answer' | 'aborted' | 'refusal' | 'error') => Promise<string>
   bash: (command: string, toolUseId: string) => Promise<unknown>
+  /** How the next tool calls answer at the bottom. */
+  toolAnswer: ToolAnswer
+  /** Raises a tool call on the main loop, or a subagent's, without waiting for it. */
+  tool: (tool: string, args: Record<string, unknown>, toolUseId: string, agentId?: string) => Promise<ToolCallResult>
+  /** The engine about to show a permission dialog for `tool`. */
+  permission: (tool: string, agentId?: string) => Promise<void>
+  /** The terminal drawing an approved call's progress row. */
+  progress: (toolUseId: string) => Promise<void>
+  /** Claude's text landing as a response row, mid-turn. */
+  say: (text: string, uuid: string) => Promise<void>
   /** Lets the work under way run without the clock moving. */
   settle: () => Promise<void>
   advance: (ms: number) => Promise<void>
@@ -165,6 +192,37 @@ export function world($: Engine, on: On, options: WorldOptions = {}): World {
   }
 
   const w: World = {
+    toolAnswer: () => toolResult({ stdout: 'ok', stderr: '', interrupted: false }, 'ok'),
+    tool: (tool, args, toolUseId, agentId) => {
+      const input = { tool, ...args, tool_use_id: toolUseId, ...(agentId === undefined ? {} : { agentId }) }
+      return $.tool.call(input as unknown as Parameters<typeof $.tool.call>[0]) as Promise<ToolCallResult>
+    },
+    permission: async (tool, agentId) => {
+      await $.classic.PermissionRequest({
+        tool_name: tool,
+        tool_input: {},
+        ...(agentId === undefined ? {} : { agent_id: agentId }),
+      })
+      await clock.settle()
+    },
+    progress: async toolUseId => {
+      await $.ui.render({
+        surface: 'terminal',
+        component: 'ToolProgress',
+        requestId: toolUseId,
+        props: { tool_use_id: toolUseId, kind: 'background_hint', hint: '(ctrl+b to run in background)' },
+      })
+      await clock.settle()
+    },
+    say: async (text, uuid) => {
+      await $.session.append({
+        message: { type: 'assistant', role: 'assistant', content: [{ type: 'text', text }] },
+        door: 'response',
+        origin: { kind: 'model', model: 'claude-opus-5-5' },
+        uuid,
+      })
+      await clock.settle()
+    },
     clock,
     modelCalls: [],
     answer: () => answered('SIZE 1\nMe fine.'),
@@ -283,7 +341,20 @@ export function world($: Engine, on: On, options: WorldOptions = {}): World {
   })
   on('tool.call', ($, e) => {
     keep('tool.call', e)
-    return { result: { stdout: 'ok', stderr: '', interrupted: false }, text: 'ok' }
+    return w.toolAnswer(e)
+  })
+  on('classic.PermissionRequest', ($, e) => {
+    keep('classic.PermissionRequest', e)
+    return {}
+  })
+  on('ui.render', { component: 'ToolProgress' }, ($, e) => {
+    keep('ui.render.ToolProgress', e)
+    const { Text } = $.ui.resolve(e)
+    return h(Text, { dimColor: true }, e.props.hint) as RenderElement
+  })
+  on('session.append', ($, e, next) => {
+    keep('session.append', e)
+    return next(e)
   })
 
   return w

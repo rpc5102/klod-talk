@@ -17,6 +17,9 @@ import { levelInfo } from './settings'
 import * as tracker from './tracker'
 import { WORDS } from './words'
 
+/** Mid-turn text is translated only when it runs past this many words. */
+export const MID_TURN_WORDS = 40
+
 /** One paragraph appears every this many milliseconds. */
 export const REVEAL_MS = 600
 /** The translation call gives up after this long. */
@@ -149,6 +152,11 @@ export async function offer(port: Port, text: string, id: string): Promise<void>
   await request(port, job, true)
 }
 
+/** Whether mid-turn text is a real explanation: over 40 words, fences out. */
+export function isWorthTranslating(text: string): boolean {
+  return withoutFences(text).split(/\s+/).filter(word => word !== '').length > MID_TURN_WORDS
+}
+
 /** Again: a new take on the same answer, at the level set now. */
 export async function again(port: Port): Promise<void> {
   const words = await port.words()
@@ -237,7 +245,8 @@ async function start(port: Port, job: CaveSource): Promise<void> {
     startedAt: await port.now(),
   }
   flight = current
-  await merge(port, { source: job, phase: 'chewing', shown: 0, problem: null })
+  // Claude speaks again: the tool caption goes.
+  await merge(port, { source: job, phase: 'chewing', shown: 0, problem: null, caption: null })
   await director.evaluate(port)
   void call(port, current, requestFor(job, model, leads))
 }
@@ -310,6 +319,8 @@ async function land(
     paragraphs,
     shown: 1,
     mammoths: size ?? words.mammoths,
+    pinned: paragraphs[0] ?? null,
+    caption: null,
     glossary: glossaryFor(paragraphs.slice(0, 1), WORDS),
     explainedAt: isWhole ? now : 0,
     announce: isWhole ? announcement(job.level, paragraphs) : words.announce,
@@ -357,6 +368,8 @@ async function landRock(port: Port, job: CaveSource): Promise<void> {
     phase: 'done',
     paragraphs,
     shown: 1,
+    pinned: paragraphs[0] ?? null,
+    caption: null,
     glossary: [],
     explainedAt: await port.now(),
     announce: announcement('rock', paragraphs),
@@ -370,6 +383,8 @@ async function sober(port: Port, job: CaveSource): Promise<void> {
     phase: 'done',
     paragraphs: [[{ text: SOBER_LINE, isTerm: false }]],
     shown: 1,
+    pinned: null,
+    caption: null,
     glossary: [],
     explainedAt: await port.now(),
     announce: SOBER_LINE,

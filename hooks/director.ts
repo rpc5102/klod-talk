@@ -3,12 +3,14 @@
 // and Sleep. It is level-triggered: it asks what should show now, so missed
 // poses are skipped, never replayed. One wake timer; nothing polls.
 //
-// Phase 1 has nine poses: Idle, Impatient, Thinking, Snack, Explaining,
-// Happy, Shrug, Panic and Sleep. Every tool shows Thinking until Phase 2.
+// Phase 1 brought nine poses: Idle, Impatient, Thinking, Snack, Explaining,
+// Happy, Shrug, Panic and Sleep. Phase 2 adds the ten that copy what Claude
+// is doing: Read, Hunt, Carve, Shout, Pilates, Flint, Dance, Sign, Bonk and
+// Campfire.
 
 import type { Timer } from 'claude-code'
 
-import type { Beat, CaveWords, PoseName, PoseState, SessionFacts, TurnResult } from '../types'
+import type { Beat, CaveWords, PanicWhy, PoseName, PoseState, RunKind, RunningTool, SessionFacts, TurnFacts, TurnResult } from '../types'
 import type { Port } from './port'
 import { levelInfo } from './settings'
 import * as sprites from './sprites'
@@ -20,6 +22,10 @@ export const HOLD_MS = 2000
 export const EXPLAIN_MS = 2000
 /** The result holds this many quiet seconds, then Idle. */
 export const RESULT_MS = 60_000
+/** A tool running this long, with no pose of its own, shows Pilates. */
+export const PILATES_MS = 5000
+/** A Bash command running this long shows Dance. */
+export const DANCE_MS = 30_000
 /** A keystroke this recent shows Impatient. */
 export const TYPING_MS = 1500
 /** Quiet this long shows Sleep. */
@@ -42,17 +48,33 @@ const LINES = {
   thinking: ['Smart rock thinking…', 'Claude is working'],
   snack: ['Me chew big words…', 'Turning Claude’s answer into cave talk'],
   happy: ['All green. Me happy.', 'Claude finished'],
-  panic: ['AAAAH. Rock broke.', 'Claude hit an API error'],
   sleep: ['Zzz… mammoth… zzz', 'Quiet for 20 minutes'],
   failed: ['Me brain hurt.', 'Cave Talk could not reach its model'],
   jokesOff: ['No jokes for this one.', 'Claude’s answer in the chat has the steps.'],
+  sign: ['Me need yes.', 'Claude is waiting for your permission'],
+  signPlain: ['Permission needed.', 'Claude is waiting for your permission'],
+  campfire: ['Fire good. Me warm.', 'Claude finished, and the deploy worked'],
 } as const satisfies Record<string, Lines>
+
+const PANIC_STATUS = 'AAAAH. Rock broke.'
+const PANIC_META: Record<PanicWhy, string> = {
+  error: 'Claude hit an API error',
+  test: 'A test run failed',
+  build: 'A build failed',
+}
+
+const FAILED_RUN: Record<RunKind, string> = {
+  test: 'The last test run failed',
+  build: 'The last build failed',
+}
 
 const EXPLAINING_META = 'Cave version of Claude’s answer'
 
 const SHRUG: Record<TurnResult['why'], Lines> = {
+  win: ['Me not know.', 'Claude finished'],
   done: ['Me not know.', 'Claude finished'],
   asks: ['Me not know.', 'Claude asked you something'],
+  failed: ['Me not know.', 'The last test or build run failed'],
   refusal: ['Me not know.', 'Claude declined this one'],
   error: ['Me not know.', 'The turn ended on an API error'],
 }
@@ -61,13 +83,74 @@ function want(name: PoseName, [status, meta]: Lines, extra: Partial<Want> = {}):
   return { name, status, meta, isStill: false, beat: null, ...extra }
 }
 
+/** The turn's result pose. */
+function resultWant(result: TurnResult): Want {
+  if (result.pose === 'happy') {
+    return want('happy', LINES.happy)
+  }
+  if (result.pose === 'campfire') {
+    return want('campfire', LINES.campfire)
+  }
+  const [status, meta] = SHRUG[result.why]
+  return want('shrug', [status, result.failedRun ? FAILED_RUN[result.failedRun] : meta])
+}
+
+function files(count: number): string {
+  return count === 1 ? '1 file' : `${count} files`
+}
+
+/**
+ * The newest running tool's pose, by kind and age. The age counts from when
+ * its permission dialog closed, if it asked.
+ */
+export function toolPose(tool: RunningTool, turn: TurnFacts | null, now: number): Want {
+  const age = now - tool.startedAt
+  const what = tool.summary === '' ? tool.tool : tool.summary
+  if (tool.tool === 'Bash' && age >= DANCE_MS) {
+    return want('dance', ['Me do hurry-up dance.', `Claude is running ${what} · over 30 s`])
+  }
+  switch (tool.kind) {
+    case 'test':
+    case 'build':
+    case 'deploy':
+      return want('flint', ['Me make fire…', `Claude ran ${what}`])
+    case 'edit':
+      if (turn?.lastRunFailed === true) {
+        return want('bonk', ['Me bonk bug.', 'Claude is fixing what failed'])
+      }
+      return want('carve', ['Me carve.', `Claude edited ${files(Math.max(1, turn?.edited.length ?? 1))}`])
+    case 'read':
+      return want('read', ['Me read. Scroll long.', `Claude read ${what}`])
+    case 'search':
+      return want('hunt', ['Me hunt word.', `Claude ran ${what}`])
+    case 'web':
+      return want('shout', [
+        'Me shout into Big Cave.',
+        tool.tool === 'WebFetch' ? `Claude fetched ${what}` : 'Claude searched the web',
+      ])
+    default:
+      if (age >= PILATES_MS) {
+        return want('pilates', ['Me do core. You wait.', `Claude is running ${what} · over 5 s`])
+      }
+      return want('thinking', LINES.thinking)
+  }
+}
+
 /** What should show now, by priority. Pure: facts, words and the time in. */
 export function desired(facts: SessionFacts, words: CaveWords, now: number): Want {
+  const wait = facts.permissionWait
   if (facts.jokesOff) {
+    // Sign still shows, in plain words.
+    if (wait !== null && !wait.isQuestion) {
+      return want('sign', LINES.signPlain, { isStill: true })
+    }
     return want('idle', LINES.jokesOff, { isStill: true })
   }
   if (now < facts.panicUntil) {
-    return want('panic', LINES.panic)
+    return want('panic', [PANIC_STATUS, PANIC_META[facts.panicWhy]])
+  }
+  if (wait !== null) {
+    return wait.isQuestion ? want('shrug', SHRUG.asks) : want('sign', LINES.sign)
   }
   if (words.phase === 'chewing') {
     return want('snack', LINES.snack)
@@ -85,12 +168,16 @@ export function desired(facts: SessionFacts, words: CaveWords, now: number): Wan
     const why = words.problem === null ? meta : `Translation failed: ${words.problem}`
     return want('shrug', [status, why], { beat })
   }
+  const newest = facts.running[facts.running.length - 1]
+  if (newest !== undefined) {
+    return toolPose(newest, facts.turn, now)
+  }
   if (facts.turn !== null) {
     return want('thinking', LINES.thinking)
   }
   const result = facts.result
   if (result !== null && (now < result.endedAt + RESULT_MS || result.asksUser)) {
-    return result.pose === 'happy' ? want('happy', LINES.happy) : want('shrug', SHRUG[result.why])
+    return resultWant(result)
   }
   if (facts.typingAt !== null && now - facts.typingAt < TYPING_MS) {
     return want('impatient', LINES.impatient)
@@ -126,8 +213,9 @@ export function isOnScreen(next: Want, current: PoseState): boolean {
 
 /**
  * The next moment the answer could change on its own: a hold or a beat
- * ending, Panic ending, Explaining ending, 60 s after a turn, the end of
- * typing, 20 quiet minutes. Null when nothing is due.
+ * ending, Panic ending, Explaining ending, the newest tool crossing 5 or
+ * 30 s, 60 s after a turn, the end of typing, 20 quiet minutes. Null when
+ * nothing is due.
  */
 export function nextWakeAt(
   facts: SessionFacts,
@@ -135,7 +223,10 @@ export function nextWakeAt(
   current: PoseState,
   now: number,
 ): number | null {
+  const newest = facts.running[facts.running.length - 1]
   const times = [
+    newest !== undefined ? newest.startedAt + PILATES_MS : 0,
+    newest !== undefined ? newest.startedAt + DANCE_MS : 0,
     current.holdUntil,
     current.beat !== null ? current.beatUntil : 0,
     facts.panicUntil,

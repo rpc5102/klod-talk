@@ -1,11 +1,12 @@
-// The Pane's drawing. register.tsx's render hook reads the pose, cave and
-// settings atoms and hands them here with the surface's elements; this never
-// writes, and its buttons only call the actions it is given. It never sees
-// the session atom, which changes on every keystroke.
+// The Pane's drawing. register.tsx's render hook reads the pose, cave,
+// settings and display atoms and hands them here with the surface's
+// elements; this never writes, and its buttons only call the actions it is
+// given. It never sees the session atom, which changes on every keystroke.
 
 import type { EngineInterface, RenderInput } from 'claude-code'
 
 import type { CaveSettings, CaveWords, DisplayFacts, PoseState, Segment } from '../types'
+import { METER_COLUMNS, METER_ROWS, meterCells, meterSvg, meterText } from './meter'
 import { plainText } from './reply'
 import { LEVELS, levelInfo } from './settings'
 import {
@@ -60,6 +61,30 @@ const INTRO: Segment[][] = [
 
 export const CHEWING = 'Me chew big words…'
 export const BRAIN_HURT = 'Me brain hurt.'
+export const PINNED_LABEL = 'Last cave answer'
+export const METER_LABEL = 'Problem size'
+
+/** The desktop meter's size in CSS pixels: three to a mammoth pixel. */
+const METER_SCALE = 3
+
+/** What the tablet shows: the intro, the chew, a tool caption, the cave words, or the failure. */
+export type Tablet = 'intro' | 'chewing' | 'caption' | 'words' | 'failed'
+
+export function tabletOf(words: CaveWords): Tablet {
+  if (words.phase === 'chewing') {
+    return 'chewing'
+  }
+  if (words.phase === 'streaming') {
+    return 'words'
+  }
+  if (words.caption !== null) {
+    return 'caption'
+  }
+  if (words.phase === 'failed') {
+    return 'failed'
+  }
+  return words.phase === 'empty' ? 'intro' : 'words'
+}
 
 /** The paragraphs on screen now. */
 export function shownParagraphs(words: CaveWords): Segment[][] {
@@ -140,14 +165,28 @@ export function draw(e: PaneInput, resolve: Resolve, state: PaneState, actions: 
     </Text>
   )
 
+  const tablet = tabletOf(words)
   const body =
-    words.phase === 'empty'
+    tablet === 'intro'
       ? INTRO.map(paragraph)
-      : words.phase === 'chewing'
+      : tablet === 'chewing'
         ? [<Text dimColor>{CHEWING}</Text>]
-        : words.phase === 'failed'
+        : tablet === 'failed'
           ? [<Text dimColor>{BRAIN_HURT}</Text>]
-          : shownParagraphs(words).map(paragraph)
+          : tablet === 'caption'
+            ? [paragraph(words.caption?.segments ?? [])]
+            : shownParagraphs(words).map(paragraph)
+
+  // While captions run, the last translation's first paragraph stays pinned under them.
+  const pinned =
+    tablet === 'caption' && words.pinned !== null ? (
+      <Box key="pinned" flexDirection="column">
+        <Text dimColor bold>
+          {PINNED_LABEL}
+        </Text>
+        {paragraph(words.pinned)}
+      </Box>
+    ) : null
 
   return (
     <Box flexDirection="column" width={columns} gap={1}>
@@ -165,6 +204,8 @@ export function draw(e: PaneInput, resolve: Resolve, state: PaneState, actions: 
       <Box flexDirection="column" gap={1}>
         {body}
       </Box>
+      {pinned}
+      {meter(e, resolve, words)}
       <Box flexDirection="row" flexWrap="wrap" columnGap={2}>
         {levelPicker(e, resolve, state.settings, actions)}
         <Button key="again" label="Again" hotkey="a" variant="primary" onPress={actions.again} />
@@ -181,6 +222,45 @@ export function draw(e: PaneInput, resolve: Resolve, state: PaneState, actions: 
             }}
           />
         ) : null}
+      </Box>
+    </Box>
+  )
+}
+
+/**
+ * The mammoth meter and its text twin, once a translation has landed. It
+ * holds still until the next one lands.
+ */
+function meter(e: PaneInput, resolve: Resolve, words: CaveWords) {
+  if (words.paragraphs.length === 0) {
+    return null
+  }
+  const { Box, Text } = resolve(e)
+  const label = meterText(words.mammoths)
+  let art = null
+  if (e.surface === 'terminal') {
+    const { Raster } = resolve(e)
+    art = <Raster key="meter" columns={METER_COLUMNS} rows={METER_ROWS} cells={meterCells(words.mammoths)} />
+  } else {
+    const { Svg } = resolve(e)
+    art = (
+      <Svg
+        source={meterSvg(words.mammoths)}
+        alt={label}
+        width={METER_COLUMNS * METER_SCALE}
+        height={METER_ROWS * 2 * METER_SCALE}
+      />
+    )
+  }
+
+  return (
+    <Box key="meter-row" flexDirection="column">
+      <Text dimColor bold>
+        {METER_LABEL}
+      </Text>
+      <Box flexDirection="row" alignItems="center" columnGap={2} flexWrap="wrap">
+        {art}
+        <Text>{label}</Text>
       </Box>
     </Box>
   )

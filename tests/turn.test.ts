@@ -38,7 +38,7 @@ test('a full turn runs Thinking, Snack, Explaining for at least 2 s, then Happy,
   expect(atoms.pose.status).toBe(A2.scenes.find(one => one.id === 'thinking')!.status)
   expect(atoms.pose.meta).toBe(scene('thinking').meta)
 
-  // A tool runs: every tool shows Thinking until Phase 2.
+  // A command with no pose of its own shows Thinking under 5 s.
   await w.bash('kubectl describe pod payments-api-7d9f6 -n prod', 'toolu_1')
   expect((await w.peek()).pose.name).toBe('thinking')
   await w.advance(2000)

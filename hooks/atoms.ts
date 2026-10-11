@@ -1,4 +1,4 @@
-// What the four atoms read as before anything is written. The atoms
+// What the five atoms read as before anything is written. The atoms
 // themselves are consts in register.tsx, where the engine's scan can list
 // them; their types are declared once in types/index.d.ts.
 
@@ -8,8 +8,10 @@ export const EMPTY_FACTS: SessionFacts = {
   turn: null,
   running: [],
   lastTool: null,
+  permissionWait: null,
   result: null,
   panicUntil: 0,
+  panicWhy: 'error',
   ownBeats: [],
   typingAt: null,
   quietSince: 0,
@@ -34,6 +36,8 @@ export const EMPTY_CAVE: CaveWords = {
   shown: 0,
   skipped: 0,
   explainedAt: 0,
+  pinned: null,
+  caption: null,
   mammoths: 0,
   glossary: [],
   announce: '',

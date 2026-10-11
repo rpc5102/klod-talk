@@ -5,6 +5,8 @@ export type Seg = { text: string; isTerm: boolean }
 export type Scene = { id: string; sprite: string; status: string; meta: string }
 export type Level = { name: string; status: string; takes: Seg[][][] }
 export type Sample = { id: string; chat: string; cave: string[]; mammoths: number }
+export type ToolScene = Scene & { mammoths: number; body: Seg[][]; after?: Scene }
+export type ChatRow = { kind: string; call: string; result: string }
 
 export const A2: { scenes: Scene[]; levels: Level[] } = {
   "scenes": [
@@ -590,6 +592,531 @@ export const A3: {
           [
             {
               "text": "Rock rock.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Rock.",
+              "isTerm": true
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+}
+
+export const A4: {
+  prompt: string
+  chew: { sprite: string; status: string; meta: string }
+  scenes: ToolScene[]
+  chat: ChatRow[]
+  answer: string[]
+  levels: Level[]
+} = {
+  "prompt": "billing tests fail on CI but pass on my laptop",
+  "chew": {
+    "sprite": "snack",
+    "status": "Me chew big words…",
+    "meta": "Turning Claude’s answer into cave talk"
+  },
+  "scenes": [
+    {
+      "id": "typing",
+      "sprite": "impatient",
+      "status": "Hurry. Mammoth not wait.",
+      "meta": "You are typing…",
+      "mammoths": 0,
+      "body": [
+        [
+          {
+            "text": "Me wait. You type. Me count rock while me wait.",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "hunt",
+      "sprite": "hunt",
+      "status": "Me hunt word.",
+      "meta": "Claude ran Grep",
+      "mammoths": 0,
+      "body": [
+        [
+          {
+            "text": "Me hunt word ",
+            "isTerm": false
+          },
+          {
+            "text": "date.today",
+            "isTerm": true
+          },
+          {
+            "text": ". Find it three time, in two scroll.",
+            "isTerm": false
+          }
+        ],
+        [
+          {
+            "text": "Word hide in invoice. Word always hide in invoice.",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "read",
+      "sprite": "read",
+      "status": "Me read. Scroll long.",
+      "meta": "Claude read src/billing/invoice.py",
+      "mammoths": 0,
+      "body": [
+        [
+          {
+            "text": "Me read scroll ",
+            "isTerm": false
+          },
+          {
+            "text": "invoice.py",
+            "isTerm": true
+          },
+          {
+            "text": ". One hundred forty-two line.",
+            "isTerm": false
+          }
+        ],
+        [
+          {
+            "text": "Me nod like me understand. Me not understand. Claude understand.",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "shout",
+      "sprite": "shout",
+      "status": "Me shout into Big Cave.",
+      "meta": "Claude searched the web",
+      "mammoths": 0,
+      "body": [
+        [
+          {
+            "text": "Me yell into Big Cave of Internet: ",
+            "isTerm": false
+          },
+          {
+            "text": "PYTEST FREEZE TIME TIMEZONE?",
+            "isTerm": true
+          }
+        ],
+        [
+          {
+            "text": "Big Cave yell back ten thing. Very loud cave.",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "answer",
+      "sprite": "explaining",
+      "status": "",
+      "meta": "",
+      "mammoths": 2,
+      "body": []
+    },
+    {
+      "id": "ask",
+      "sprite": "sign",
+      "status": "Me need yes.",
+      "meta": "Claude is waiting for your permission",
+      "mammoths": 2,
+      "body": [
+        [
+          {
+            "text": "Claude want bring new tool into cave: ",
+            "isTerm": false
+          },
+          {
+            "text": "freezegun",
+            "isTerm": true
+          },
+          {
+            "text": ".",
+            "isTerm": false
+          }
+        ],
+        [
+          {
+            "text": "Claude ask first. Polite Claude. You click yes or no. Me hold sign.",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "carve",
+      "sprite": "carve",
+      "status": "Me carve.",
+      "meta": "Claude edited 2 files",
+      "mammoths": 2,
+      "body": [
+        [
+          {
+            "text": "Me carve ",
+            "isTerm": false
+          },
+          {
+            "text": "invoice.py",
+            "isTerm": true
+          },
+          {
+            "text": ". Three mark in. One mark out.",
+            "isTerm": false
+          }
+        ],
+        [
+          {
+            "text": "Me carve test scroll too. Six mark in. Stone not have undo.",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "test",
+      "sprite": "flint",
+      "status": "Me make fire…",
+      "meta": "Claude ran pytest",
+      "mammoths": 2,
+      "body": [
+        [
+          {
+            "text": "Rock hit rock. Me start fire: pytest.",
+            "isTerm": false
+          }
+        ],
+        [
+          {
+            "text": "Two hundred fourteen spark. Every spark catch.",
+            "isTerm": false
+          }
+        ]
+      ],
+      "after": {
+        "id": "test-after",
+        "sprite": "suspicious",
+        "status": "Too easy. Me not trust.",
+        "meta": "214 passed on the first try"
+      }
+    },
+    {
+      "id": "ci",
+      "sprite": "dance",
+      "status": "Me do hurry-up dance.",
+      "meta": "Claude is watching the CI run · 41 s",
+      "mammoths": 2,
+      "body": [
+        [
+          {
+            "text": "Far away test cave slow. Me dance. Dance make CI fast.",
+            "isTerm": false
+          }
+        ],
+        [
+          {
+            "text": "(Dance not make CI fast.)",
+            "isTerm": false
+          }
+        ]
+      ]
+    },
+    {
+      "id": "done",
+      "sprite": "explaining",
+      "status": "",
+      "meta": "",
+      "mammoths": 0,
+      "body": [],
+      "after": {
+        "id": "done-after",
+        "sprite": "happy",
+        "status": "All green. Me happy.",
+        "meta": "CI passed · 214 tests"
+      }
+    },
+    {
+      "id": "idle",
+      "sprite": "sleep",
+      "status": "Zzz… mammoth… zzz",
+      "meta": "Quiet for 20 minutes",
+      "mammoths": 0,
+      "body": [
+        [
+          {
+            "text": "Me sleep. Poke me when Claude talk.",
+            "isTerm": false
+          }
+        ]
+      ]
+    }
+  ],
+  "chat": [
+    {
+      "kind": "tool",
+      "call": "Grep(\"date.today\", path=\"src/billing\")",
+      "result": "Found 3 matches in 2 files"
+    },
+    {
+      "kind": "tool",
+      "call": "Read(src/billing/invoice.py)",
+      "result": "Read 142 lines"
+    },
+    {
+      "kind": "tool",
+      "call": "WebSearch(\"pytest freeze time timezone\")",
+      "result": "Did 1 search, 10 results"
+    },
+    {
+      "kind": "prompt",
+      "call": "Allow Bash(pip install freezegun)?",
+      "result": ""
+    },
+    {
+      "kind": "tool",
+      "call": "Update(src/billing/invoice.py)",
+      "result": "Updated 1 file, +3 −1"
+    },
+    {
+      "kind": "tool",
+      "call": "Update(tests/billing/test_invoice.py)",
+      "result": "Updated 1 file, +6"
+    },
+    {
+      "kind": "tool",
+      "call": "Bash(pytest tests/billing -q)",
+      "result": "214 passed in 6.2s"
+    },
+    {
+      "kind": "tool",
+      "call": "Bash(git push && gh run watch)",
+      "result": "CI · billing · completed: success · 41s"
+    }
+  ],
+  "answer": [
+    "The failures are a timezone bug. CI runs in UTC and your laptop in America/New_York. due_date() calls date.today(), so after 8 pm Eastern the two machines disagree on the date and due dates land a day apart.",
+    "Fix: compute dates in the business timezone with ZoneInfo and freeze the clock in the tests. I’ll add freezegun for that."
+  ],
+  "levels": [
+    {
+      "name": "Less cave",
+      "status": "Me use more word. Still small word.",
+      "takes": [
+        [
+          [
+            {
+              "text": "Your test pass at home and fail on CI because the two computers not agree what day it is.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "CI cave live on ",
+              "isTerm": false
+            },
+            {
+              "text": "UTC",
+              "isTerm": true
+            },
+            {
+              "text": " time. Your laptop live on New York time. After 8 at night, CI already in tomorrow, so due date come out one day late.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Fix:",
+              "isTerm": true
+            },
+            {
+              "text": " tell invoice to count days in New York time, and freeze clock in test so sun stop moving.",
+              "isTerm": false
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Caveman",
+      "status": "Me make big words small.",
+      "takes": [
+        [
+          [
+            {
+              "text": "Your cave and CI cave not agree what day it is.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Your cave: still Tuesday. CI cave: already ",
+              "isTerm": false
+            },
+            {
+              "text": "Wednesday",
+              "isTerm": true
+            },
+            {
+              "text": ". CI cave have no window. CI cave guess.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Invoice say due in thirty sun. Thirty sun from ",
+              "isTerm": false
+            },
+            {
+              "text": "which",
+              "isTerm": true
+            },
+            {
+              "text": " day? Test cry.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Fix:",
+              "isTerm": true
+            },
+            {
+              "text": " tell invoice which cave it live in. Freeze sun in test. Sun not move, test not cry.",
+              "isTerm": false
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "text": "Sun go down at different time in different cave.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Your cave say Tuesday. CI cave say ",
+              "isTerm": false
+            },
+            {
+              "text": "Wednesday",
+              "isTerm": true
+            },
+            {
+              "text": ". Both cave very sure. Both cave stubborn.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Fix:",
+              "isTerm": true
+            },
+            {
+              "text": " pick one cave. Everybody use New York cave. Freeze sun in test.",
+              "isTerm": false
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "text": "Story of two cave. Same test. Different day.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Test pass in your cave. Test fail in CI cave. Test not bad. ",
+              "isTerm": false
+            },
+            {
+              "text": "Calendar",
+              "isTerm": true
+            },
+            {
+              "text": " bad.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Fix:",
+              "isTerm": true
+            },
+            {
+              "text": " everybody agree on one cave. Then stop sun. Moral: always ask which cave.",
+              "isTerm": false
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Very caveman",
+      "status": "UGH. ME EXPLAIN.",
+      "takes": [
+        [
+          [
+            {
+              "text": "Day. Wrong. ",
+              "isTerm": false
+            },
+            {
+              "text": "UGH",
+              "isTerm": true
+            },
+            {
+              "text": ".",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Your cave Tuesday. CI cave Wednesday. Why. WHY.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Fix:",
+              "isTerm": true
+            },
+            {
+              "text": " ONE CAVE. STOP SUN.",
+              "isTerm": false
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Literal rock",
+      "status": "Rock.",
+      "takes": [
+        [
+          [
+            {
+              "text": "Rock.",
+              "isTerm": false
+            }
+          ],
+          [
+            {
+              "text": "Rock rock rock.",
               "isTerm": false
             }
           ],

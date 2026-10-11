@@ -8,9 +8,12 @@ Claude does.
 
 <img src="kit/png/caveman_hero@8x.png" width="128" alt="Klod, a grumpy pixel caveman with a big beard">
 
-**Status:** Phase 1 is built: the pane, Klod's nine core poses (Idle,
-Impatient, Thinking, Snack, Explaining, Happy, Shrug, Panic, Sleep) and the cave
-translation. Every tool shows Thinking until Phase 2.
+**Status:** Phases 1 and 2 are built: the pane, the cave translation, and
+nineteen poses. Phase 1 brought the nine core ones (Idle, Impatient, Thinking,
+Snack, Explaining, Happy, Shrug, Panic, Sleep). Phase 2 adds the ten that copy
+what Claude is doing (Read, Hunt, Carve, Shout, Pilates, Flint, Dance, Sign,
+Bonk, Campfire), a one-line caption for each tool, the pinned last answer, the
+mammoth meter, and translation of long mid-turn explanations.
 
 ## Install
 
@@ -31,7 +34,7 @@ That line installs what is on `main`. To try a branch Claude is still working
 on, add `#` and the branch name to the marketplace:
 
 ```
-/plugin install cave-talk --marketplace rpc5102/klod-talk#claude/phase-1-build-vryqol
+/plugin install cave-talk --marketplace rpc5102/klod-talk#phase-2
 ```
 
 The pane opens by itself in a fullscreen terminal 144 columns or wider. The cave

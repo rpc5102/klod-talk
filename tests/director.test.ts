@@ -1,12 +1,15 @@
-// The director's pure parts: desired() over a table of facts, breaksHold()
-// and the next wake time. Lines come from the prototypes and samples.
+// The director's pure parts: desired() over a table of facts, the tool
+// poses, breaksHold() and the next wake time. Lines come from the
+// prototypes (A2, A3, the A4 tool session) and the samples.
 
 import { describe, expect, test } from 'claude-code/testing'
 
-import type { CaveWords, PoseState, SessionFacts } from '../types'
+import type { CaveWords, PoseState, RunningTool, SessionFacts, TurnResult } from '../types'
 import { EMPTY_CAVE, EMPTY_FACTS, FIRST_POSE } from '../hooks/atoms'
 import {
+  DANCE_MS,
   EXPLAIN_MS,
+  PILATES_MS,
   RESULT_MS,
   SLEEP_MS,
   TYPING_MS,
@@ -14,7 +17,8 @@ import {
   desired,
   nextWakeAt,
 } from '../hooks/director'
-import { A2, A3, STATUS_LINES } from './fixtures'
+import { newTurn } from '../hooks/tracker'
+import { A2, A3, A4, STATUS_LINES } from './fixtures'
 
 const NOW = 1_000_000_000
 
@@ -30,10 +34,15 @@ function shown(over: Partial<PoseState> = {}): PoseState {
   return { ...FIRST_POSE, since: NOW - 500, holdUntil: NOW + 1500, ...over }
 }
 
-const turn = { id: 'turn-1', startedAt: NOW - 3000 }
-const happy = { pose: 'happy', why: 'done', asksUser: false, endedAt: NOW - 1000 } as const
-const asks = { pose: 'shrug', why: 'asks', asksUser: true, endedAt: NOW - 1000 } as const
+const turn = newTurn('turn-1', NOW - 3000)
+const happy: TurnResult = { pose: 'happy', why: 'done', asksUser: false, failedRun: null, endedAt: NOW - 1000 }
+const asks: TurnResult = { pose: 'shrug', why: 'asks', asksUser: true, failedRun: null, endedAt: NOW - 1000 }
 const source = { id: 'turn-1', text: 'An answer.', level: 'caveman' } as const
+const a4 = (id: string) => A4.scenes.find(scene => scene.id === id)!
+
+function running(over: Partial<RunningTool> = {}): RunningTool {
+  return { toolUseId: 'toolu_1', tool: 'Bash', kind: 'other', summary: 'ls', startedAt: NOW - 100, ...over }
+}
 
 describe('desired()', () => {
   test('Idle when nothing happens', () => {
@@ -49,10 +58,9 @@ describe('desired()', () => {
     expect(desired(facts({ typingAt: NOW - TYPING_MS }), words(), NOW).name).toBe('idle')
   })
 
-  test('Thinking while a turn runs, and for every tool until Phase 2', () => {
+  test('Thinking while a turn runs, and for a quick tool with no pose of its own', () => {
     expect(desired(facts({ turn }), words(), NOW).name).toBe('thinking')
-    const running = [{ toolUseId: 'toolu_1', tool: 'Read', startedAt: NOW - 40_000 }]
-    expect(desired(facts({ turn, running }), words(), NOW).name).toBe('thinking')
+    expect(desired(facts({ turn, running: [running()] }), words(), NOW).name).toBe('thinking')
   })
 
   test('Snack while the words chew, over a running turn', () => {
@@ -121,9 +129,9 @@ describe('desired()', () => {
   })
 
   test('An API error ends on Shrug, a refusal on Shrug', () => {
-    const error = { pose: 'shrug', why: 'error', asksUser: false, endedAt: NOW } as const
+    const error: TurnResult = { pose: 'shrug', why: 'error', asksUser: false, failedRun: null, endedAt: NOW }
     expect(desired(facts({ result: error }), words(), NOW).meta).toBe('The turn ended on an API error')
-    const refusal = { ...error, why: 'refusal' } as const
+    const refusal: TurnResult = { ...error, why: 'refusal' }
     expect(desired(facts({ result: refusal }), words(), NOW).name).toBe('shrug')
   })
 
@@ -143,8 +151,10 @@ describe('desired()', () => {
   test('The louder trigger wins, all the way down the list', () => {
     const everything = facts({
       panicUntil: NOW + 1,
+      permissionWait: { tool: 'Bash', since: NOW - 10, isQuestion: false },
       ownBeats: [{ name: 'failed', lengthMs: 2000 }],
       turn,
+      running: [running({ tool: 'Read', kind: 'read' })],
       result: asks,
       typingAt: NOW,
       quietSince: NOW - SLEEP_MS,
@@ -155,9 +165,11 @@ describe('desired()', () => {
     let currentWords = chewing
     const peel = [
       () => (current = { ...current, panicUntil: 0 }),
+      () => (current = { ...current, permissionWait: null }),
       () => (currentWords = words({ phase: 'streaming', source })),
       () => (currentWords = words({ phase: 'done', source })),
       () => (current = { ...current, ownBeats: [] }),
+      () => (current = { ...current, running: [] }),
       () => (current = { ...current, turn: null }),
       () => (current = { ...current, result: null }),
       () => (current = { ...current, typingAt: null }),
@@ -170,15 +182,117 @@ describe('desired()', () => {
     }
     expect(order).toEqual([
       'panic',
+      'sign',
       'snack',
       'explaining',
       'shrug',
+      'read',
       'thinking',
       'shrug',
       'impatient',
       'sleep',
       'idle',
     ])
+  })
+})
+
+describe('tool poses', () => {
+  const pose = (tool: RunningTool, over: Partial<SessionFacts> = {}) =>
+    desired(facts({ turn, running: [tool], ...over }), words(), NOW)
+
+  test('Read, Hunt and Shout copy what Claude is looking at', () => {
+    const read = pose(running({ tool: 'Read', kind: 'read', summary: 'src/billing/invoice.py' }))
+    expect(read).toMatchObject({ name: 'read', status: a4('read').status, meta: a4('read').meta })
+    const hunt = pose(running({ tool: 'Grep', kind: 'search', summary: 'Grep' }))
+    expect(hunt).toMatchObject({ name: 'hunt', status: a4('hunt').status, meta: a4('hunt').meta })
+    expect(pose(running({ kind: 'search', summary: 'rg' })).meta).toBe('Claude ran rg')
+    const shout = pose(running({ tool: 'WebSearch', kind: 'web', summary: 'pytest freeze time' }))
+    expect(shout).toMatchObject({ name: 'shout', status: a4('shout').status, meta: a4('shout').meta })
+    expect(pose(running({ tool: 'WebFetch', kind: 'web', summary: 'docs.python.org' })).meta).toBe(
+      'Claude fetched docs.python.org',
+    )
+  })
+
+  test('Carve counts the files the turn edited', () => {
+    const edits = { ...turn, edited: ['src/billing/invoice.py', 'tests/billing/test_invoice.py'] }
+    const carve = pose(running({ tool: 'Edit', kind: 'edit', summary: 'tests/billing/test_invoice.py' }), { turn: edits })
+    expect(carve).toMatchObject({ name: 'carve', status: a4('carve').status, meta: a4('carve').meta })
+    const one = pose(running({ tool: 'Edit', kind: 'edit' }), { turn: { ...turn, edited: ['a.py'] } })
+    expect(one.meta).toBe('Claude edited 1 file')
+  })
+
+  test('An edit right after a failed test or build run is Bonk', () => {
+    const failed = { ...turn, lastRunFailed: true, lastRunKind: 'test' as const }
+    const bonk = pose(running({ tool: 'Edit', kind: 'edit' }), { turn: failed })
+    expect(bonk).toMatchObject({ name: 'bonk', status: STATUS_LINES['bonk']! })
+    const fixed = { ...turn, lastRunFailed: false, lastRunKind: 'test' as const }
+    expect(pose(running({ tool: 'Edit', kind: 'edit' }), { turn: fixed }).name).toBe('carve')
+  })
+
+  test('Tests, builds and deploys strike flint; any command past 30 s dances', () => {
+    for (const kind of ['test', 'build', 'deploy'] as const) {
+      const flint = pose(running({ kind, summary: 'pytest' }))
+      expect(flint).toMatchObject({ name: 'flint', status: a4('test').status, meta: a4('test').meta })
+      expect(pose(running({ kind, startedAt: NOW - DANCE_MS + 1 })).name).toBe('flint')
+      const dance = pose(running({ kind, summary: 'gh run watch', startedAt: NOW - DANCE_MS }))
+      expect(dance).toMatchObject({ name: 'dance', status: a4('ci').status })
+    }
+    expect(pose(running({ kind: 'other', startedAt: NOW - DANCE_MS })).name).toBe('dance')
+    expect(pose(running({ kind: 'install', startedAt: NOW - DANCE_MS })).name).toBe('dance')
+  })
+
+  test('Anything else thinks under 5 s and does Pilates past it; only Bash dances', () => {
+    expect(pose(running({ kind: 'install', startedAt: NOW - PILATES_MS + 1 })).name).toBe('thinking')
+    const pilates = pose(running({ kind: 'install', startedAt: NOW - PILATES_MS }))
+    expect(pilates).toMatchObject({ name: 'pilates', status: STATUS_LINES['pilates']! })
+    const mcp = running({ tool: 'mcp__db__query', kind: 'other', summary: 'mcp__db__query', startedAt: NOW - DANCE_MS })
+    expect(pose(mcp).name).toBe('pilates')
+  })
+
+  test('The newest running tool decides', () => {
+    const older = running({ toolUseId: 'toolu_1', tool: 'Read', kind: 'read' })
+    const newer = running({ toolUseId: 'toolu_2', tool: 'Grep', kind: 'search' })
+    expect(desired(facts({ turn, running: [older, newer] }), words(), NOW).name).toBe('hunt')
+  })
+
+  test('A shown dialog is Sign, over the tools and the words', () => {
+    const wait = { tool: 'Bash', since: NOW - 10, isQuestion: false }
+    const sign = desired(facts({ turn, running: [running()], permissionWait: wait }), words({ phase: 'chewing', source }), NOW)
+    expect(sign).toMatchObject({ name: 'sign', status: a4('ask').status, meta: a4('ask').meta })
+  })
+
+  test('Claude asking you something through a dialog is Shrug', () => {
+    const wait = { tool: 'AskUserQuestion', since: NOW - 10, isQuestion: true }
+    const shrug = desired(facts({ turn, permissionWait: wait }), words(), NOW)
+    expect(shrug).toMatchObject({ name: 'shrug', status: STATUS_LINES['shrug']!, meta: 'Claude asked you something' })
+  })
+
+  test('With jokes off, Sign still shows, in plain words and still', () => {
+    const wait = { tool: 'Bash', since: NOW - 10, isQuestion: false }
+    const sign = desired(facts({ jokesOff: true, permissionWait: wait }), words(), NOW)
+    expect(sign).toMatchObject({ name: 'sign', isStill: true, status: 'Permission needed.' })
+    expect(sign.status).not.toBe(a4('ask').status)
+  })
+
+  test('A failed test run is Panic for its 2 s, with what failed in plain words', () => {
+    const panic = desired(facts({ turn, panicUntil: NOW + 1, panicWhy: 'test' }), words(), NOW)
+    expect(panic).toMatchObject({ name: 'panic', status: STATUS_LINES['panic']!, meta: 'A test run failed' })
+    expect(desired(facts({ panicUntil: NOW + 1, panicWhy: 'build' }), words(), NOW).meta).toBe('A build failed')
+  })
+
+  test('The turn ends on Campfire for a big win, Shrug when the last run failed', () => {
+    const win: TurnResult = { ...happy, pose: 'campfire', why: 'win' }
+    expect(desired(facts({ result: win }), words(), NOW)).toMatchObject({
+      name: 'campfire',
+      status: STATUS_LINES['campfire']!,
+    })
+    const failed: TurnResult = { ...happy, pose: 'shrug', why: 'failed', failedRun: 'test' }
+    expect(desired(facts({ result: failed }), words(), NOW)).toMatchObject({
+      name: 'shrug',
+      meta: 'The last test run failed',
+    })
+    const broke: TurnResult = { ...failed, failedRun: 'build' }
+    expect(desired(facts({ result: broke }), words(), NOW).meta).toBe('The last build failed')
   })
 })
 
@@ -224,6 +338,14 @@ describe('nextWakeAt()', () => {
     const result = facts({ result: { ...happy, endedAt: NOW - 1000 } })
     expect(nextWakeAt(result, words(), past, NOW)).toBe(NOW - 1000 + RESULT_MS)
     expect(nextWakeAt(facts(), words(), past, NOW)).toBe(NOW - 1000 + SLEEP_MS)
+  })
+
+  test('A running tool wakes him as it crosses 5 and 30 s', () => {
+    const past = shown({ holdUntil: NOW - 1 })
+    const busy = facts({ turn, running: [running({ startedAt: NOW - 1000 })] })
+    expect(nextWakeAt(busy, words(), past, NOW)).toBe(NOW - 1000 + PILATES_MS)
+    const long = facts({ turn, running: [running({ startedAt: NOW - 6000 })] })
+    expect(nextWakeAt(long, words(), past, NOW)).toBe(NOW - 6000 + DANCE_MS)
   })
 
   test('A question for you waits on you, not the clock', () => {

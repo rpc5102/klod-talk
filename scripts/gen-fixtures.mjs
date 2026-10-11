@@ -1,4 +1,4 @@
-// Turns the prototypes' scene data and the sample answers into
+// Turns the prototypes' scene data (A2, A3 and the A4 tool session) and the sample answers into
 // tests/fixtures.ts, because a test runs where it cannot read files. Run from
 // the repo root:
 //
@@ -15,10 +15,18 @@ const load = path => JSON.parse(readFileSync(join(root, path), 'utf8'))
 
 const a2 = load('docs/prototypes/a2-stone-tablet.json')
 const a3 = load('docs/prototypes/a3-live-session.json')
+const a4 = load('docs/prototypes/a4-tool-session.json')
 const samples = load('docs/reference/samples.json')
 
 const segments = paragraph => paragraph.map(([text, isTerm]) => ({ text, isTerm: isTerm === 1 }))
 const scene = one => ({ id: one.id, sprite: one.sprite, status: one.status, meta: one.meta })
+const toolScene = one => ({
+  ...scene(one),
+  mammoths: one.mammoths,
+  body: (one.body ?? []).map(segments),
+  ...(one.after ? { after: scene({ id: `${one.id}-after`, ...one.after }) } : {}),
+})
+const tool = row => ({ kind: row.kind, call: row.call ?? row.text ?? '', result: row.result ?? '' })
 const levels = list =>
   list.map(level => ({
     name: level.name,
@@ -33,6 +41,16 @@ const data = {
     chew: { sprite: a3.chew.sprite, status: a3.chew.status, meta: a3.chew.meta },
     scenes: a3.scenes.map(scene),
     levels: levels(a3.levels),
+  },
+  A4: {
+    prompt: a4.prompt,
+    chew: { sprite: a4.chew.sprite, status: a4.chew.status, meta: a4.chew.meta },
+    scenes: a4.scenes.map(toolScene),
+    chat: a4.chat.filter(row => row.kind === 'tool' || row.kind === 'prompt').map(tool),
+    answer: a4.chat
+      .filter(row => row.kind === 'answer')
+      .flatMap(row => row.paras.map(para => para.map(([text]) => text).join(''))),
+    levels: levels(a4.levels),
   },
   SAMPLES: samples.samples.map(sample => ({
     id: sample.id,
@@ -51,6 +69,8 @@ const lines = [
   'export type Scene = { id: string; sprite: string; status: string; meta: string }',
   'export type Level = { name: string; status: string; takes: Seg[][][] }',
   'export type Sample = { id: string; chat: string; cave: string[]; mammoths: number }',
+  'export type ToolScene = Scene & { mammoths: number; body: Seg[][]; after?: Scene }',
+  'export type ChatRow = { kind: string; call: string; result: string }',
   '',
   `export const A2: { scenes: Scene[]; levels: Level[] } = ${JSON.stringify(data.A2, null, 2)}`,
   '',
@@ -60,6 +80,15 @@ const lines = [
   '  scenes: Scene[]',
   '  levels: Level[]',
   `} = ${JSON.stringify(data.A3, null, 2)}`,
+  '',
+  'export const A4: {',
+  '  prompt: string',
+  '  chew: { sprite: string; status: string; meta: string }',
+  '  scenes: ToolScene[]',
+  '  chat: ChatRow[]',
+  '  answer: string[]',
+  '  levels: Level[]',
+  `} = ${JSON.stringify(data.A4, null, 2)}`,
   '',
   `export const SAMPLES: Sample[] = ${JSON.stringify(data.SAMPLES, null, 2)}`,
   '',

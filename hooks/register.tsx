@@ -11,7 +11,10 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { TerminalArt } from '../types'
 import { DEFAULT_SETTINGS, EMPTY_CAVE, EMPTY_FACTS, FIRST_DISPLAY, FIRST_POSE } from './atoms'
+import * as captions from './captions'
 import * as director from './director'
+import type { Args } from './kinds'
+import { classify } from './kinds'
 import { lane } from './lane'
 import type { Port } from './port'
 import { settingsFrom } from './settings'
@@ -20,7 +23,7 @@ import * as tracker from './tracker'
 import * as translator from './translator'
 import { draw } from './view'
 
-// The four atoms the pane draws from.
+// The five atoms: the pane draws from all but the session facts.
 const session = atom({ plugin: 'cave-talk', key: 'session' } as const, EMPTY_FACTS)
 const pose = atom({ plugin: 'cave-talk', key: 'pose' } as const, FIRST_POSE)
 const cave = atom({ plugin: 'cave-talk', key: 'cave' } as const, EMPTY_CAVE)
@@ -105,17 +108,27 @@ export const register: Register = (on, options) => {
   let hasAutoOpened = false
   let lastTypedAt = Number.NEGATIVE_INFINITY
   let calls = 0
+  // The project folder, for paths in his lines; session.start sets it again after a reload.
+  let cwd = ''
+  // The tool whose dialog is up, so a progress row costs nothing when none is.
+  let asking: string | null = null
+  // The last mid-turn text sent to the translator, so the answer is not sent twice.
+  let lastSpoken: string | null = null
 
   // Also after every reload, with every timer cancelled: fill what is empty,
   // then restart the wake timer, his frames and any translation in progress.
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'klod', description: 'Open Cave Talk', immediate: true })
+    cwd = e.cwd
     const port = portFor($)
     await port.work(async () => {
       const { version } = await $.state.get({ plugin: 'cave-talk', key: 'session' })
       if (version > 0) {
         // A reload: the person already had their chance to see it opened unasked.
         hasAutoOpened = true
+        // Atoms an older build wrote get the fields this one reads.
+        await port.changeFacts(tracker.upgraded())
+        await port.changeWords(words => ({ ...EMPTY_CAVE, ...words }))
       } else {
         // A first start: fill the atoms that are still empty.
         const now = await port.now()
@@ -182,21 +195,82 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  // The main loop's tools only; a subagent's pass straight through.
+  // The main loop's tools: a pose and a caption each. A subagent's pass
+  // straight through, and only close a dialog they raised.
   on('tool.call', async ($, e, next) => {
-    if (e.agentId !== undefined) {
-      return next(e)
-    }
     const port = portFor($)
+    const tool = String(e.tool)
+    if (e.agentId !== undefined) {
+      const ran = await next(e)
+      if (asking === tool) {
+        asking = null
+        track(port, now => tracker.dialogSettled(tool, now))
+      }
+      return ran
+    }
     calls += 1
     const id = e.tool_use_id ?? `call-${calls}`
-    const tool = String(e.tool)
-    track(port, now => tracker.toolStarted(id, tool, now))
+    const args = e as unknown as Args
+    const call = classify(tool, args, cwd)
+    void port.work(async () => {
+      const now = await port.now()
+      await port.changeFacts(tracker.toolStarted({ toolUseId: id, tool, ...call }, now))
+      await captions.show(port, id, captions.started(tool, args, call))
+      await director.evaluate(port)
+    })
     const ran = await next(e)
+    if (asking === tool) {
+      asking = null
+    }
     const outcome = { isError: ran.isError === true, wasDenied: ran.deny !== undefined }
-    track(port, now => tracker.toolEnded(id, tool, outcome, now))
+    void port.work(async () => {
+      const now = await port.now()
+      await port.changeFacts(tracker.toolEnded(id, tool, call.kind, outcome, now))
+      const text = ran.text ?? ran.deny ?? ''
+      await captions.land(port, id, captions.landed(tool, args, call, { ...outcome, result: ran.result, text }))
+      await director.evaluate(port)
+    })
 
     return ran
+  })
+
+  // A permission dialog is about to show: Sign, or Shrug when it is Claude
+  // asking you something. Auto-mode decisions raise none.
+  on('classic.PermissionRequest', ($, e, next) => {
+    const tool = e.tool_name
+    asking = tool
+    track(portFor($), now => tracker.permissionAsked(tool, now))
+
+    return next(e)
+  })
+
+  // An approved call's progress row is drawn: it is running, so Sign ends.
+  on('ui.render', { component: 'ToolProgress' }, ($, e, next) => {
+    if (asking !== null) {
+      // The tracker ends Sign only when the row is the asking call's.
+      const id = e.props.tool_use_id
+      track(portFor($), now => tracker.toolRunning(id, now))
+    }
+
+    return next(e)
+  })
+
+  // Mid-turn text over 40 words is a real explanation: it gets translated.
+  on('session.append', { door: 'response' }, async ($, e, next) => {
+    const stored = await next(e)
+    if (e.agentId === undefined && e.message.type === 'assistant') {
+      const text = e.message.content
+        .filter(block => block.type === 'text' && typeof block['text'] === 'string')
+        .map(block => String(block['text']))
+        .join('\n\n')
+      if (translator.isWorthTranslating(text)) {
+        lastSpoken = text.trim()
+        const port = portFor($)
+        void port.work(() => translator.offer(port, text, e.uuid))
+      }
+    }
+
+    return stored
   })
 
   // The main loop's answer goes to the translator, which is never awaited.
@@ -205,9 +279,13 @@ export const register: Register = (on, options) => {
     if (e.agentId === undefined) {
       const port = portFor($)
       const answer = e.reason === 'answer' ? e.answer : ''
+      // Sent already as mid-turn text: once is enough.
+      const isSent = answer.trim() === lastSpoken
+      lastSpoken = null
+      asking = null
       void port.work(async () => {
         // The chew starts before the turn ends, so the result never shows first.
-        if (answer.trim() !== '') {
+        if (answer.trim() !== '' && !isSent) {
           await translator.offer(port, answer, e.turnId)
         }
         await port.changeFacts(tracker.turnEnded(e.reason, answer, await port.now()))
