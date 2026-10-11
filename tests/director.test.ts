@@ -304,10 +304,20 @@ describe('breaksHold()', () => {
     meta: '',
     isStill: false,
     beat: null,
+    cutsIn: name === 'sign',
   })
 
   test('Panic cuts in at once', () => {
     expect(breaksHold(want('panic'), shown({ name: 'thinking' }), words())).toBe(true)
+  })
+
+  test('Claude’s question through a dialog cuts in too; a turn’s Shrug does not', () => {
+    const question = desired(facts({ turn, permissionWait: { tool: 'AskUserQuestion', since: NOW, isQuestion: true } }), words(), NOW)
+    expect(question).toMatchObject({ name: 'shrug', cutsIn: true })
+    expect(breaksHold(question, shown({ name: 'carve' }), words())).toBe(true)
+    const result = desired(facts({ result: asks }), words(), NOW)
+    expect(result).toMatchObject({ name: 'shrug', cutsIn: false })
+    expect(breaksHold(result, shown({ name: 'explaining' }), words())).toBe(false)
   })
 
   test('Sign cuts in at once: a dialog is waiting on you', () => {

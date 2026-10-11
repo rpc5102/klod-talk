@@ -37,6 +37,8 @@ export type Want = {
   meta: string
   isStill: boolean
   beat: Beat | null
+  /** A dialog waiting on you: Sign, or Shrug for Claude's question. It cuts into the hold. */
+  cutsIn: boolean
 }
 
 /** His line, then what happened in plain words. */
@@ -82,7 +84,7 @@ const SHRUG: Record<TurnResult['why'], Lines> = {
 }
 
 function want(name: PoseName, [status, meta]: Lines, extra: Partial<Want> = {}): Want {
-  return { name, status, meta, isStill: false, beat: null, ...extra }
+  return { name, status, meta, isStill: false, beat: null, cutsIn: false, ...extra }
 }
 
 /** The turn's result pose. */
@@ -144,7 +146,7 @@ export function desired(facts: SessionFacts, words: CaveWords, now: number): Wan
   if (facts.jokesOff) {
     // Sign still shows, in plain words.
     if (wait !== null && !wait.isQuestion) {
-      return want('sign', LINES.signPlain, { isStill: true })
+      return want('sign', LINES.signPlain, { isStill: true, cutsIn: true })
     }
     return want('idle', LINES.jokesOff, { isStill: true })
   }
@@ -152,7 +154,7 @@ export function desired(facts: SessionFacts, words: CaveWords, now: number): Wan
     return want('panic', [PANIC_STATUS, PANIC_META[facts.panicWhy]])
   }
   if (wait !== null) {
-    return wait.isQuestion ? want('shrug', SHRUG.asks) : want('sign', LINES.sign)
+    return wait.isQuestion ? want('shrug', SHRUG.asks, { cutsIn: true }) : want('sign', LINES.sign, { cutsIn: true })
   }
   if (words.phase === 'chewing') {
     return want('snack', LINES.snack)
@@ -197,8 +199,8 @@ export function breaksHold(next: Want, current: PoseState, words: CaveWords): bo
   if (next.name === 'panic') {
     return true
   }
-  // So does Sign: a dialog is waiting on you now, not in 2 s.
-  if (next.name === 'sign') {
+  // So does a dialog: Sign, or Shrug for Claude's question. It waits on you now, not in 2 s.
+  if (next.cutsIn) {
     return true
   }
   // Snack ends the moment the words arrive.
