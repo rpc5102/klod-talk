@@ -2,7 +2,7 @@
 
 > This is a copy of the build notes kept in Claude Docs, exported on Oct 10, 2026. It is the spec for build sessions in this repo; Bob approves changes to it. The design canvas linked below needs a claude.ai sign-in, so pictures of its boards are in [mockups/](mockups/) and the prototypes' scene data is in [prototypes/](prototypes/).
 
-Oct 9, 2026 · @Bob Carey
+Oct 9, 2026 · @Bob Carey · updated Oct 11, 2026 with the decisions made while building and trying Phase 1
 
 ## Overview
 
@@ -11,33 +11,42 @@ Cave Talk is one TypeScript mod for Claude Code: a side pane that retells Claude
 Decisions already made:
 
 - **All in the mod.** One hooks module on Claude Code's mod API draws the pane, watches the session, runs the timers and makes the translation call. No helper process.
-- **Pseudo-code only.** Real code comes after these notes are reviewed.
+- **Pseudo-code, then code.** Phase 1 is built from these notes. Where building or trying it changed a decision, the text below says so.
 - **Phased, MVP first.** Phase 1 ships the pane, the translation and nine core poses. Phases 2 to 4 add tool poses, personality, edge cases and settings.
-- **Sprites come from the kit.** A build script turns the kit's `caveman.json` (28 poses, frames and timings) into code the mod imports. The mod never redraws them.
+- **Sprites come from the kit.** A build script turns the kit's `caveman.json` (28 poses, frames and timings) into code the mod imports, and another paints its frames as PNGs for terminals that show real images. The mod never redraws them.
+- **Installed from this repo.** The repository is its own plugin marketplace: `/plugin install cave-talk --marketplace rpc5102/klod-talk`, with `#<branch>` after the repo to try a work branch. `plugin.json` sets no `version`, so an install follows the commits of the branch it came from and picks up a new phase with `claude plugin update cave-talk@klod-talk`.
 - **The [design canvas](https://claude.ai/artifact/EbGXhRDE8qw6UjgnKXjNCJ) is the spec.** Where these notes and a board disagree, the newest round wins, except where the mod API forces a change; those are called out.
 
 Read it in order: the architecture and data shapes, then the two engines everything leans on (the pose director and the translator), then the phases in build order. It closes with what we're not doing and the questions to settle against the mod API before any real code.
 
 ## Architecture
 
-One hooks module in six small parts. Hooks feed a session tracker; a pose director and a translator decide what the pane shows; one render hook draws it from `$.state`.
+One hooks module in six small parts. Hooks feed a session tracker; a pose director and a translator decide what the pane shows; one render hook draws it from `$.state`. The mod is the repository itself, laid out as Phase 1 built it:
 
 ```text
-cave-talk/
-  .claude-plugin/plugin.json   name, version, userConfig (cave level, grunts, jokes)
-  hooks/hooks.json             { "modules": ["./register.tsx"] }
-  hooks/register.tsx           wires events to the parts below, nothing else
-  hooks/tracker.ts             session facts: turn, running tools, failures, quiet clock
-  hooks/director.ts            picks the pose: priority, holds, exceptions, timers
-  hooks/translator.ts          cave translation: queue, model call, paragraphs
-  hooks/captions.ts            local tool captions from name, args, result, word list
-  hooks/view.tsx               the Pane's render hook, per surface
-  hooks/sprites.ts             caveman.json to Raster cells (terminal) or SVG (remote)
-  types/index.d.ts             PluginState contract: every $.state value
-  assets/caveman.json          from the sprite kit, unchanged
-  assets/words.json            the word list ("Timezone" = "which cave you live in")
-  assets/sounds/               grunts, Phase 3
-  tests/                       *.test.ts for claude plugin test
+klod-talk/
+  .claude-plugin/plugin.json       name cave-talk, no version, userConfig (cave level, open at start, translation model)
+  .claude-plugin/marketplace.json  the repo as a marketplace: cave-talk, source "./"
+  hooks/hooks.json                 { "modules": ["./register.tsx"] }
+  hooks/register.tsx               wires events to the parts; declares the atoms and builds the port from $
+  hooks/port.ts                    what the parts may do outside themselves: every call on $, as closures
+  hooks/tracker.ts                 session facts: turn, running tools, failures, quiet clock
+  hooks/director.ts                picks the pose: priority, holds, exceptions, timers
+  hooks/translator.ts              cave translation: queue, model call, paragraphs
+  hooks/reply.ts                   what is sent and what comes back: fences out, SIZE, JOKES OFF, *terms*
+  hooks/captions.ts                local tool captions from name, args, result, word list (Phase 2)
+  hooks/view.tsx                   the Pane's drawing, per surface
+  hooks/sprites.ts                 caveman.json to Raster cells or image frames (terminal) or SVG (desktop)
+  hooks/catalog.ts, words.ts       generated from kit/caveman.json and docs/reference/words.json
+  hooks/atoms.ts, settings.ts      the atoms' first values; the options as the mod reads them
+  hooks/lane.ts                    the one lane every background write goes through, in order
+  types/index.d.ts                 PluginState contract: every $.state value
+  kit/caveman.json                 the sprite kit, unchanged; it stays in kit/
+  docs/reference/words.json        the word list ("Timezone" = "which cave you live in")
+  assets/frames/                   every frame as a 256 by 256 PNG, for terminals that show images
+  assets/sounds/                   grunts, Phase 3
+  scripts/                         gen-catalog, gen-words, gen-frames, gen-fixtures; their output is committed
+  tests/                           *.test.ts for claude plugin test
 ```
 
 | Part | Owns | Reads | Writes |
@@ -46,15 +55,16 @@ cave-talk/
 | director | the pose, and when it may change | `session` and `cave` atoms, clock | `pose` atom |
 | translator | the cave words | the turn's answer, cave level | `cave` atom; flags jokes off through the tracker |
 | captions | one-line tool captions | tool name, args, result, word list | `cave.caption` |
-| view | the pane | `pose`, `cave`, `settings` | nothing: render hooks never write |
-| sprites | frames as cells or SVG | the generated catalog | the frame last shown, in a module variable |
+| view | the pane | `pose`, `cave`, `settings`, `display` | nothing: render hooks never write |
+| sprites | frames as cells, image files or SVG | the generated catalog, the `display` atom | the frame last shown, in a module variable; `display` when a terminal turns out to show no images |
 
-Four rules hold everywhere:
+Five rules hold everywhere:
 
 - **Never change what Claude does.** Every hook on Claude's own events ends in `return next(e)` with `e` untouched, and no command answers with text the model would read. Cave Talk only watches.
 - **Drawn state lives in `$.state`.** Module variables are lost on a hot reload; atoms are not. The view never reads the `session` atom, which changes on every keystroke.
 - **Render hooks only read.** Events and button handlers write, through `update($, atom, fn)`.
 - **Every reload is a restart.** `session.start` runs again on each reload (and `$.config.set` reloads), with every timer cancelled. It fills only atoms that are still empty, then restarts the wake timer, the sprite's frames and any translation that was chewing. A /clear ends the session with no new start, so `session.end` with reason `clear` resets the facts.
+- **`$` stays in register.tsx.** The engine reads the hooks module's source to learn what it calls. It follows `$` only into functions declared in the module's own file, never across an import, and lists an atom only when the atom is a const there. So `register.tsx` declares the atoms and builds a port: closures over `$`, each call spelled out (`$.clock.now()`, `$.model.complete(...)`, `$.ui.blit(...)`). The parts take the port, never `$`, and the view gets the surface's elements and its actions passed in.
 
 ```mermaid
 flowchart TB
@@ -69,7 +79,7 @@ flowchart TB
   cave[("cave atom<br/>paragraphs, caption, pinned line, meter, announce")]
   pose[("pose atom<br/>name, hold, status, meta")]
   view["view: the Pane's render hook<br/>reads the atoms and never writes; buttons write through update()"]
-  term["Terminal<br/>Raster, frames by $.ui.blit"]
+  term["Terminal<br/>Image in kitty and Ghostty, else Raster;<br/>frames by $.ui.blit"]
   desk["Desktop app<br/>Svg, frames by SMIL"]
   type --> tracker
   turn --> tracker
@@ -90,11 +100,11 @@ flowchart TB
 
 *Hooks feed the atoms; the pane only reads them. Every hook passes Claude's events on unchanged.*
 
-Tinted boxes are `$.state` atoms. The session atom rides the arrow from tracker to director, and a fourth, `settings`, only mirrors the options. Nothing points back into Claude Code.
+Tinted boxes are `$.state` atoms. The session atom rides the arrow from tracker to director, a fourth, `settings`, only mirrors the options, and a fifth, `display`, records how the terminal draws Klod. Nothing points back into Claude Code.
 
 ## Data shapes
 
-The pane draws from four atoms under the plugin name `cave-talk`, declared once in `types/index.d.ts`. Settings mirror the `userConfig` options; the word list and the Wall's paintings persist in `$.store`. Every field `desired()` reads is declared here.
+The pane draws from five atoms under the plugin name `cave-talk`, declared once in `types/index.d.ts`. Settings mirror the `userConfig` options; the word list and the Wall's paintings persist in `$.store`. Every field `desired()` reads is declared here.
 
 ```text
 Catalog        hooks/catalog.ts, generated from the kit's caveman.json
@@ -132,9 +142,14 @@ CaveWords      atom 'cave'        translator and captions merge into it, never r
   mammoths        0 to 5, set only when a translation lands
   glossary        [term, cave word] pairs on screen now
   announce        text for screen readers, set once per answer
+  problem         why the last translation failed, in plain words, or null
 
 Settings       atom 'settings'    a copy of the userConfig options (rows in Phase 4)
   level, when, copyTools, poke, wall, noJokes, grunts, motion, size, textOnly, autoOpen, model
+                  Phase 1 declares level, autoOpen and model; Phase 4 adds the rest
+
+DisplayFacts   atom 'display'     set once per session, at its first start
+  terminalArt     'image' in kitty and Ghostty, 'cells' in every other terminal
 ```
 
 `ToolKind` is decided once per call, from the tool's name and arguments: `read`, `search`, `edit`, `web`, `test`, `build`, `deploy`, `install`, `other`. Bash commands that search (`rg`, `grep`, `find`) are `search`, since native builds have no Grep or Glob tool. Everything downstream switches on the kind, never on raw command strings.
@@ -217,7 +232,8 @@ Each turn's answer gets one `$.model.complete` call that returns cave paragraphs
 - **One call at a time.** One call is in flight and one text waits. A newer text replaces the waiting one, or aborts the call in flight through `options.signal`; the pane counts it as "1 older answer skipped". Hooks never await the translator, because appends are stored in order.
 - **Literal rock costs nothing.** That level answers "Rock." locally, with no model call.
 - **The same call decides jokes off.** If the answer is about real damage (lost data, a security incident, an outage that hurts people), the model answers `JOKES OFF`. From then on the translator and the captions stop, and each answer gets one sober line.
-- **Failure is a beat, not an error.** A blocked model or a bad request rejects; `isAnswered: false` covers an API error, an empty reply or the 8 s timeout. Either way the pane shows Shrug and "Me brain hurt.", with Try now. An abort because the person pressed Esc is skipped quietly. Claude's answer is untouched either way.
+- **Low effort.** The call asks for `effort: 'low'`. At the model's default effort a real answer took about 5 s and up to 1,000 output tokens, most of them hidden thinking, close to the 8 s timeout; at low effort the same answer took about 1.4 s and 170 tokens, the second of chewing above.
+- **Failure is a beat, not an error.** A blocked model or a bad request rejects; `isAnswered: false` covers an API error, an empty reply or the 8 s timeout. Either way the pane shows Shrug and "Me brain hurt.", with Try now. The plain-words line under it says why, from the cave atom's `problem`: "Translation failed: API error 404, model not found", "no reply within 8 s", "the call was refused (…)", "the model sent back no words", "the reply had no words in it". The debug log has the same reason with the model and the time taken. An abort because the person pressed Esc is skipped quietly. Claude's answer is untouched either way.
 
 ```text
 on turn.complete(e)
@@ -236,15 +252,15 @@ translator.offer(text, id)
   run({ id, text, level })
 
 translator.run(job)
-  merge cave { source: job, phase: 'chewing' }
+  merge cave { source: job, phase: 'chewing', problem: null }
   try r = await $.model.complete({ model, system: FIXED (one cache mark at its end),
                                    prompt: levelNote(job.level) + withoutFences(job.text),
-                                   maxTokens: 500, timeoutMs: 8000 }, { signal })
-  catch: failed(); return                             blocked model, bad request
+                                   maxTokens: 500, timeoutMs: 8000, effort: 'low' }, { signal })
+  catch err: failed('the call was refused (' + err + ')'); return   blocked model, bad request
   if job.id != latest: run(waiting) if any; return    a newer text won
   if not r.isAnswered
     if r.reason == 'aborted' and the person pressed Esc: return
-    failed(); return                                  Shrug beat, "Me brain hurt."
+    failed(why r.reason); return                      Shrug beat, "Me brain hurt.", the reason under it
   out = parse(r.text)                                 SIZE line, JOKES OFF, paragraphs, *terms*
   if out.jokesOff: tracker.jokesOff(); merge cave { one sober line }; return
   cancel the previous reveal timer
@@ -290,6 +306,8 @@ export register(on, options)
   on session.start                       also after every reload, with timers cancelled
     $.command.register({ name: 'klod', description: 'Open Cave Talk', immediate: true })
     fill atoms that are still empty; settings = options
+    if display is still empty: terminalArt = 'image' where TERM, TERM_PROGRAM or
+      KITTY_WINDOW_ID names kitty or Ghostty, else 'cells'
     director.evaluate(); sprites.restart()          from what $.state holds
     if cave was chewing, or cave.source.level != settings.level
       translator.run(cave.source at settings.level)   the reload dropped the call
@@ -297,11 +315,12 @@ export register(on, options)
 
   on ui.render { component: 'AbovePrompt' }          a pass-through that opens the pane once
     if options.autoOpen and e.viewport?.isFullscreen and not opened yet
-      $.ui.open({ id: 'cave', title: 'Cave Talk' })   unasked: placed from 144 columns
+      $.ui.open({ id: 'cave', title: 'Cave Talk', rows })   unasked: placed from 144 columns
     return next(e)
 
   on command.run { command: 'klod' }
-    $.ui.open({ id: 'cave', title: 'Cave Talk' })      asked: placed at any width
+    $.ui.open({ id: 'cave', title: 'Cave Talk', rows })   asked: placed at any width
+                                                       rows inline: 16 with the image, 24 with cells
     return {}                                          no text: the model reads command output
 
   on prompt.edit        tracker.typed(now);            return next(e)
@@ -327,28 +346,42 @@ view.draw($, e)
     if cave.phase == 'chewing': Text dim "Me chew big words..."
     for each shown paragraph: Text, terms bold in the accent colour
     Box row
-      Select key 'level' (mobile: four small Buttons) -> $.config.set({ key: 'cave-talk.level', value })
+      Select key 'level', label 'Cave level' -> $.config.set({ key: 'cave-talk.level', value })
+                                       none on mobile, which has no Select and draws no panes today
       Button 'Again' -> translator.run(cave.source)
       Button 'Copy'  -> $.ui.copy({ text, surface: e.surface })   terminal only
 ```
 
 A level change goes through `$.config.set`, which reloads the module; `session.start` then translates `cave.source` again at the new level. Copy is terminal-only for now, because a remote surface has no clipboard path yet.
 
-The sprite is drawn two ways, from the same catalog:
+The sprite is drawn three ways, from the same catalog:
 
-- **Terminal: `Raster`, 32 columns by 16 rows.** Each cell packs two pixels. It is `▀` (top colour over bottom colour) when the top pixel is opaque, `▄` in the bottom colour when only the bottom one is, and a space when neither is; empty colours are the terminal's default, `0x01000000`. A chain of `$.clock.after(durationMs)` timers calls `$.ui.blit({ requestId: 'cave', key: 'sprite', cells })`, and the render hook always draws the frame last shown.
-- **Desktop app: `Svg` with `isInteractive: true`.** One SVG per pose holds every frame as a group, and a looping SMIL `<animate>` on each group's `visibility` (`calcMode="discrete"`, `keyTimes` from the kit's durations) switches them. The surface animates it, so the engine never redraws per frame. Merge same-colour runs into one `<rect>` to stay well under 131,072 characters; `alt` is the pose's description. The same path would cover VS Code and the phone, whose element tables the types already declare, but Claude Code's mods docs say neither draws a mod's panes today.
+- **Terminal, in Ghostty and kitty: `Image`, 16 columns by 8 rows.** These terminals show real images, so Klod keeps every pixel at half the cells (Bob found 32 by 16 too large). `scripts/gen-frames.mjs` paints every frame from `caveman.json` as a 256 by 256 PNG in `assets/frames/`, eight screen pixels to a sprite pixel, so he is crisp at 1x and on a 2x display, and the terminal reads the files itself. The same chain of timers swaps frames with `$.ui.blit({ requestId: 'cave', key: 'sprite', source: { file, format: 'png' } })`. The `alt` is the pose's description. Which terminal it is comes from `TERM`, `TERM_PROGRAM` and `KITTY_WINDOW_ID`, once per session, kept in the `display` atom; a blit refused because the terminal draws the `alt` in the picture's place (tmux, ssh) switches to cells for the rest of the session.
+- **Terminal, everywhere else: `Raster`, 32 columns by 16 rows.** Smaller isn't possible there without losing pixels: a cell is the smallest thing these terminals colour, and half blocks already put two pixels in each, so a 16 by 8 version has to merge pixels and his face goes. Each cell packs two pixels. It is `▀` (top colour over bottom colour) when the top pixel is opaque, `▄` in the bottom colour when only the bottom one is, and a space when neither is; empty colours are the terminal's default, `0x01000000`. A chain of `$.clock.after(durationMs)` timers calls `$.ui.blit({ requestId: 'cave', key: 'sprite', cells })`, and the render hook always draws the frame last shown.
+- **Desktop app: `Svg`, drawn as an image.** It was `isInteractive: true` at first, which draws it in a sandboxed frame. In the app's dark mode the frame painted a white box behind him, and a click in the pane redrew it and reloaded the frame, so he flickered. As a plain image he has neither. One SVG per pose holds every frame as a group, and a looping SMIL `<animate>` on each group's `visibility` (`calcMode="discrete"`, `keyTimes` from the kit's durations) switches them. The surface animates it, so the engine never redraws per frame. Merge same-colour runs into one `<rect>` to stay well under 131,072 characters; `alt` is the pose's description. The same path would cover VS Code and the phone, whose element tables the types already declare, but Claude Code's mods docs say neither draws a mod's panes today.
 
 Done when:
 
-- [ ] `claude plugin validate` and `tsc -p` are clean
+- [x] `claude plugin validate` and `tsc -p` are clean
 - [ ] A real turn in a 160-column fullscreen terminal runs Thinking, Snack, Explaining, Happy, and the cave words stream in
 - [ ] Again gives a new take; a level change translates the same answer again
 - [ ] `/klod` opens the pane inline in an 80-column terminal
 - [ ] The desktop app shows the same turn, the sprite animating
-- [ ] A broken model name gives Shrug and "Me brain hurt.", and Claude's answer is untouched
+- [x] A broken model name gives Shrug and "Me brain hurt.", and Claude's answer is untouched (checked in a headless session with `ANTHROPIC_DEFAULT_HAIKU_MODEL` set to a model that doesn't exist)
 - [ ] A hot reload keeps the pane, the pose and the words, and restarts the animation
-- [ ] The director's fake-clock tests pass
+- [x] The director's fake-clock tests pass
+
+Phase 1 as built also makes these choices where the notes were silent. Each is Bob's to change:
+
+- **Lines with no source in the docs.** The meta lines "Nothing happening" (Idle), "Claude finished" (Happy), "Claude asked you something", "Claude declined this one" and "The turn ended on an API error" (Shrug), and "Claude hit an API error" (Panic). Explaining's meta, "Cave version of Claude's answer", is from the Accessibility board, and Happy's line, "All green. Me happy.", from the A4 and A6 prototypes.
+- **A question for you** means the answer's last line of prose ends in a question mark, until Phase 2's `classic.PermissionRequest` hook catches `AskUserQuestion`.
+- **Panic** shows only for an API error until Phase 2's tool kinds can tell a failing test or build.
+- **The failed beat** plays 2 s, then the turn's own result.
+- **JOKES OFF** lasts until a /clear until Phase 4 adds Jokes back on.
+- **The empty pane** shows the two intro paragraphs from the first-run board.
+- **Terms** are bold in the theme's `claude` colour, which follows light and dark.
+- **Keystrokes** closer together than 200 ms are one fact change.
+- **The /config rows** store the labels people see ("Caveman", "Haiku (fast)"); the atoms keep short names.
 
 ## Phase 2: tool poses and captions
 
@@ -540,7 +573,7 @@ Settings follow the Settings board, one row per `userConfig` field, so `/config`
 | Grunt sounds | Off, Quiet, Loud | Off |
 | Motion | Animate, Still | Animate |
 | Text only (no sprite) | on, off | off |
-| Caveman size | 64, 96, 128 (the desktop app; the terminal is fixed at 32 by 16 cells) | 128 |
+| Caveman size | 64, 96, 128 (the desktop app; the terminal draws 16 by 8 cells in Ghostty and kitty, 32 by 16 elsewhere) | 128 |
 | Open at start | on, off | on |
 | Translation model | Haiku (fast), Same as Claude | Haiku |
 
@@ -577,7 +610,7 @@ Done when:
 Every phase keeps the Accessibility board's rules: one announcement per answer, motion that can be turned off, sound only when asked, and a pose you can read without seeing it.
 
 - **One announcement per answer.** Streaming text is silent. When an answer's last paragraph is in, the whole cave answer is exposed once; the permission prompt's Sign line is the only other one. Tool captions, pose changes, fidgets and Claude moments stay silent. The element props have no live-region flag, so how this reaches a screen reader on each surface is an open question.
-- **Every pose has words.** `Svg` takes the pose's description as `alt`, and the meta line always says what happened in plain words. The terminal's `Raster` has no alt and reads as block characters, so the **Text only** setting replaces the sprite with its description.
+- **Every pose has words.** `Svg` takes the pose's description as `alt`, and the meta line always says what happened in plain words. The terminal's `Raster` has no alt and reads as block characters, so the **Text only** setting replaces the sprite with its description. In Ghostty and kitty the `Image` carries the description as its alt.
 - **Not colour alone.** Word-list terms are bold as well as rust, and the meter has its text twin.
 - **Motion.** No surface tells a plugin about reduced motion, so the Motion setting does the job. Still shows each pose's first frame, drops the jitter and the bounce, shows the cave text all at once, and plays no fidgets.
 - **Sound.** Off by default. With grunts on: one grunt per pose change, never more than one every 3 s; a fidget gets one small sound instead, and going back to Idle is silent. Quiet is `gain: 0.3`. `$.audio.play` uses `afplay`, so it plays on macOS only; elsewhere the setting says so rather than failing quietly.
@@ -591,7 +624,7 @@ The director, the captions and the parser are plain functions, so most tests nee
 | --- | --- | --- |
 | Pure functions | `desired()` and `breaksHold()` over a table of facts; the kind classifier over command strings; caption pairs against a golden set; the parser (SIZE, JOKES OFF, terms, garbage); number words; the fidget picker with a seeded random; the scene validator and `paint()`, whose SVG for a fixed plan and seed is a golden file | plain unit tests, milliseconds each |
 | Engine scenarios | whole sessions raised event by event, asserting the `pose` and `cave` atoms as `mock.clock` advances | `*.test.ts` with `test`, `expect` and `mock` from `claude-code/testing` |
-| Drawing | the Pane mounted on the terminal and the desktop app: `Raster` on the terminal, `Svg` on the desktop, buttons found by key, Again pressed | the kit's `mount`, once per surface |
+| Drawing | the Pane mounted on the terminal and the desktop app: `Image` or `Raster` on the terminal by its environment, `Svg` on the desktop, buttons found by key, Again pressed | the kit's `mount`, once per surface |
 | By hand | each phase's done list, in a real session | a 160-column and an 80-column terminal, the desktop app |
 
 The scenarios worth scripting first:
@@ -627,12 +660,12 @@ The canvas prototypes (A3 live session, A4 tool session, A6 quiet time) already 
 - **No subagent text, no tool output, no code to the model.** Only the main loop's prose leaves the machine, with fenced blocks taken out.
 - **No stored conversations.** `$.store` keeps settings, the word list and the Wall's scene plans. Translations live in session state and go with the session. No telemetry.
 - **No clicking the sprite itself, for now.** A `Button` holds only text, and a `Client` can't hold a `Raster` or an `Svg`, so Poke is a button beside him.
-- **No pictures on the terminal.** Paintings show as their caption there; the Wall needs the desktop app.
+- **No paintings on the terminal.** Paintings show as their caption there; the Wall needs the desktop app. Klod himself is an image in Ghostty and kitty, which may reopen this for Phase 3.
 - **No sound off macOS.** `$.audio.play` uses `afplay`; other platforms show the setting as unavailable.
 
 ## Open questions
 
-Check these in a real session before writing code; each one changes a design choice above. The API types already settled the rest (auto-mode asks, `precompute` compactions, reduced motion, timers across reloads).
+Check these in a real session; each one changes a design choice above. The API types already settled the rest (auto-mode asks, `precompute` compactions, reduced motion, timers across reloads), and building Phase 1 settled where `$` may go (Architecture).
 
 - [ ] Does every approved tool draw a `ToolProgress` row? Sign ends there; without one, it lasts until the call settles.
 - [ ] Does `classic.PermissionRequest` fire for every dialog the person sees, MCP tools included?
@@ -640,6 +673,10 @@ Check these in a real session before writing code; each one changes a design cho
 - [ ] Does `/klod` still leave a command record the model reads when it answers with no text? If so, `/klod explain` puts pasted text in Claude's context, against the board's promise.
 - [ ] Does `$.state` survive a /clear, or must `session.end` with reason `clear` rebuild every atom?
 - [ ] Does `prompt.edit` fire for the desktop app's prompt box? Impatient depends on it.
-- [ ] Does a redraw restart the SMIL animation in an interactive `Svg`, and is it smooth in the desktop app?
+- [x] Does a redraw restart the SMIL animation in an interactive `Svg`, and is it smooth in the desktop app? It reloads: a click in the pane redrew it and Klod flickered, and in dark mode the frame painted a white box behind him. The sprite is now drawn as an image.
+- [ ] Does the desktop app run the SMIL animation in an `Svg` drawn as an image? If he stands still there, the frame needs another fix: declare a light and dark colour scheme on the SVG and keep `isInteractive`.
+- [ ] Is Klod crisp in Ghostty and kitty as an `Image`, and do the frame swaps run without flicker?
+- [ ] Bob's first real translations failed, though the same call worked in a cloud session. Now the pane says why ("Translation failed: …"): what does it say?
+- [ ] During Snack, "Me chew big words…" shows twice: as his status line (from the A3 prototype) and as the tablet's dim line (from the view above). Which one goes?
 - [ ] How good are Haiku's scene plans? Run 20 real answers through the planner before growing the motif list.
-- [ ] What does a translation cost per answer? Log `usage` from `$.model.complete` over a week of real sessions before choosing Haiku as the default for good.
+- [ ] What does a translation cost per answer? Log `usage` from `$.model.complete` over a week of real sessions before choosing Haiku as the default for good. First numbers, from one real answer at low effort: about 1.4 s, 170 output tokens, and the 736-token fixed prompt read from the cache after the first call.
