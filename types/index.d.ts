@@ -47,14 +47,14 @@ export type TranslationModel = 'haiku' | 'same'
  */
 export type ToolKind = 'read' | 'search' | 'edit' | 'web' | 'test' | 'build' | 'deploy' | 'install' | 'other'
 
-/** A test or build run: the runs whose failure means Panic, Bonk and Shrug. */
-export type RunKind = 'test' | 'build'
+/** A test, build or deploy run: the runs whose failure means Panic, Bonk and Shrug. */
+export type RunKind = 'test' | 'build' | 'deploy'
 
 /** The turn running on the main loop. */
 export type TurnFacts = {
   id: string
   startedAt: number
-  /** The last test or build run in this turn failed. */
+  /** The last test, build or deploy run in this turn failed. */
   lastRunFailed: boolean
   /** Which kind of run that was, or null before any. */
   lastRunKind: RunKind | null
@@ -94,13 +94,13 @@ export type PermissionWait = {
   isQuestion: boolean
 }
 
-/** What Panic is about: an API error, or a failed test or build run. */
+/** What Panic is about: an API error, or a failed test, build or deploy run. */
 export type PanicWhy = 'error' | RunKind
 
 /**
  * How the last turn ended, for the result pose: Campfire for a big win,
- * Happy when it answered, Shrug when it asked you something, a test or build
- * run failed last, it refused, or died on an API error.
+ * Happy when it answered, Shrug when it asked you something, a test, build
+ * or deploy run failed last, it refused, or died on an API error.
  */
 export type TurnResult = {
   pose: 'campfire' | 'happy' | 'shrug'

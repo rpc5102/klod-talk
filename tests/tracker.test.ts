@@ -51,9 +51,15 @@ describe('runs', () => {
     expect(turnEnded('answer', 'Built.', NOW + 20)(facts).result?.pose).toBe('happy')
   })
 
+  test('a failed deploy is a failed run too', () => {
+    const facts = toolEnded('toolu_1', 'Bash', 'deploy', error, NOW)(inTurn())
+    expect(facts).toMatchObject({ panicUntil: NOW + PANIC_MS, panicWhy: 'deploy' })
+    expect(facts.turn).toMatchObject({ lastRunFailed: true, lastRunKind: 'deploy', isBigWin: false })
+    expect(turnEnded('answer', 'Push failed.', NOW + 10)(facts).result).toMatchObject({ pose: 'shrug', failedRun: 'deploy' })
+  })
+
   test('other kinds failing are no Panic, and a denied run is no run', () => {
     expect(toolEnded('toolu_1', 'Bash', 'other', error, NOW)(inTurn()).panicUntil).toBe(0)
-    expect(toolEnded('toolu_1', 'Bash', 'deploy', error, NOW)(inTurn()).panicUntil).toBe(0)
     const refused = toolEnded('toolu_1', 'Bash', 'test', denied, NOW)(inTurn())
     expect(refused.panicUntil).toBe(0)
     expect(refused.turn?.lastRunKind).toBeNull()

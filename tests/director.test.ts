@@ -278,6 +278,7 @@ describe('tool poses', () => {
     const panic = desired(facts({ turn, panicUntil: NOW + 1, panicWhy: 'test' }), words(), NOW)
     expect(panic).toMatchObject({ name: 'panic', status: STATUS_LINES['panic']!, meta: 'A test run failed' })
     expect(desired(facts({ panicUntil: NOW + 1, panicWhy: 'build' }), words(), NOW).meta).toBe('A build failed')
+    expect(desired(facts({ panicUntil: NOW + 1, panicWhy: 'deploy' }), words(), NOW).meta).toBe('A deploy failed')
   })
 
   test('The turn ends on Campfire for a big win, Shrug when the last run failed', () => {
@@ -307,6 +308,11 @@ describe('breaksHold()', () => {
 
   test('Panic cuts in at once', () => {
     expect(breaksHold(want('panic'), shown({ name: 'thinking' }), words())).toBe(true)
+  })
+
+  test('Sign cuts in at once: a dialog is waiting on you', () => {
+    expect(breaksHold(want('sign'), shown({ name: 'carve' }), words())).toBe(true)
+    expect(breaksHold(want('sign'), shown({ name: 'explaining' }), words({ phase: 'streaming' }))).toBe(true)
   })
 
   test('Snack ends the moment the words arrive', () => {

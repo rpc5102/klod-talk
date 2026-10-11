@@ -218,8 +218,7 @@ test('a shown dialog gives Sign until the call settles, allowed or denied; an au
   await w.advance(2000)
 
   // Allowed, with no progress row (the desktop app draws none): Sign until it settles.
-  // The call's own pose starts first and holds its 2 s: Sign is not one of
-  // the notes' exceptions to the hold, so it shows when Carve's hold ends.
+  // The call's own pose starts first, and Sign cuts into its hold at once.
   w.toolAnswer = async () => {
     await $.classic.PermissionRequest({ tool_name: 'Edit', tool_input: {} })
     await w.clock.sleep(5000)
@@ -227,7 +226,7 @@ test('a shown dialog gives Sign until the call settles, allowed or denied; an au
   }
   call = { done: w.tool('Edit', { file_path: '/work/a.py', old_string: 'a', new_string: 'b' }, 'toolu_2') }
   await w.settle()
-  expect((await w.peek()).pose.name).toBe('carve')
+  expect((await w.peek()).pose.name).toBe('sign')
   expect((await w.peek()).session.permissionWait).toMatchObject({ tool: 'Edit', isQuestion: false })
   await w.advance(2000)
   expect((await w.peek()).pose.name).toBe('sign')

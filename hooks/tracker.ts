@@ -96,11 +96,11 @@ export function toolStarted(call: Started, now: number): Change {
 }
 
 function isRun(kind: ToolKind): kind is RunKind {
-  return kind === 'test' || kind === 'build'
+  return kind === 'test' || kind === 'build' || kind === 'deploy'
 }
 
 /**
- * A main-loop call settled. A failed test or build run shows Panic for 2 s
+ * A main-loop call settled. A failed test, build or deploy run shows Panic for 2 s
  * and is remembered for Bonk and the turn's Shrug; a deploy that worked makes
  * the turn a big win. Its dialog, if one was up, is closed.
  */

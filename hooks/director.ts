@@ -61,11 +61,13 @@ const PANIC_META: Record<PanicWhy, string> = {
   error: 'Claude hit an API error',
   test: 'A test run failed',
   build: 'A build failed',
+  deploy: 'A deploy failed',
 }
 
 const FAILED_RUN: Record<RunKind, string> = {
   test: 'The last test run failed',
   build: 'The last build failed',
+  deploy: 'The last deploy failed',
 }
 
 const EXPLAINING_META = 'Cave version of Claude’s answer'
@@ -74,7 +76,7 @@ const SHRUG: Record<TurnResult['why'], Lines> = {
   win: ['Me not know.', 'Claude finished'],
   done: ['Me not know.', 'Claude finished'],
   asks: ['Me not know.', 'Claude asked you something'],
-  failed: ['Me not know.', 'The last test or build run failed'],
+  failed: ['Me not know.', 'The last test, build or deploy run failed'],
   refusal: ['Me not know.', 'Claude declined this one'],
   error: ['Me not know.', 'The turn ended on an API error'],
 }
@@ -193,6 +195,10 @@ export function desired(facts: SessionFacts, words: CaveWords, now: number): Wan
 export function breaksHold(next: Want, current: PoseState, words: CaveWords): boolean {
   // Panic cuts in at once, even mid-hold.
   if (next.name === 'panic') {
+    return true
+  }
+  // So does Sign: a dialog is waiting on you now, not in 2 s.
+  if (next.name === 'sign') {
     return true
   }
   // Snack ends the moment the words arrive.
